@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1f1f1f;
+  background-color: #f9f9f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.navbar-logo {
+  /* Fits height cleanly inside the navbar */
+  height: 50px; 
+  width: auto;
+  
+  /* Removes the gray background box baked into the image */
+  mix-blend-mode: screen; 
+  
+  /* Strips out extra whitespace on the sides */
+  object-fit: contain;
+  margin-top: 2px;
+}
+
