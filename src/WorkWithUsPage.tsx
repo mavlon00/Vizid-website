@@ -232,9 +232,21 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    const formDataObj = new FormData(e.currentTarget);
+
+    try {
+      const response = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formDataObj as any).toString(),
+      });
+      if (!response.ok) throw new Error(`Submission failed: ${response.status}`);
+      setFormSubmitted(true);
+    } catch (error) {
+      console.error("Form submission failed:", error);
+    }
   };
 
   return (
