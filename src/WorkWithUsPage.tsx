@@ -45,12 +45,12 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
     serviceType: selectedService === 'full' ? 'Full Service' : 'Virtual Design',
     city: '',
     state: '',
-    sqFt: '',
-    startTimeframe: '',
-    completionTimeframe: '',
-    projectAlign: '',
-    pinterestLink: '',
-    mainReason: '',
+    sqft: '',
+    start: '',
+    completion: '',
+    portfolio: '',
+    pinterest: '',
+    reason: '',
   });
 
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -707,7 +707,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleFormSubmit} className="space-y-8">
+              <form name="inquiry" data-netlify="true" onSubmit={handleFormSubmit} className="space-y-8">
+                <input type="hidden" name="form-name" value="inquiry" />
                 {/* What type of design services */}
                 <div className="space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-stone-800">
@@ -777,8 +778,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                           Approximate size of home <span className="text-stone-400">*</span>
                         </label>
                         <select
-                          name="sqFt"
-                          value={formData.sqFt}
+                          name="sqft"
+                          value={formData.sqft}
                           onChange={handleInputChange}
                           required
                           className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
@@ -806,8 +807,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                         When would you like to start? <span className="text-stone-400">*</span>
                       </label>
                       <select
-                        name="startTimeframe"
-                        value={formData.startTimeframe}
+                        name="start"
+                        value={formData.start}
                         onChange={handleInputChange}
                         required
                         className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
@@ -826,8 +827,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                         Target completion <span className="text-stone-400">*</span>
                       </label>
                       <select
-                        name="completionTimeframe"
-                        value={formData.completionTimeframe}
+                        name="completion"
+                        value={formData.completion}
                         onChange={handleInputChange}
                         required
                         className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
@@ -853,8 +854,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                         Which Vizid projects best align with your vision?
                       </label>
                       <select
-                        name="projectAlign"
-                        value={formData.projectAlign}
+                        name="portfolio"
+                        value={formData.portfolio}
                         onChange={handleInputChange}
                         className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
                       >
@@ -874,8 +875,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                       </label>
                       <input
                         type="url"
-                        name="pinterestLink"
-                        value={formData.pinterestLink}
+                        name="pinterest"
+                        value={formData.pinterest}
                         onChange={handleInputChange}
                         placeholder="https://pinterest.com/your-board"
                         className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
@@ -896,8 +897,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                       What's the main reason you'd like to hire an interior designer? <span className="text-stone-400">*</span>
                     </label>
                     <textarea
-                      name="mainReason"
-                      value={formData.mainReason}
+                      name="reason"
+                      value={formData.reason}
                       onChange={handleInputChange}
                       required
                       rows={4}
