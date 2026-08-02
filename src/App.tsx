@@ -267,13 +267,10 @@ const Footer = ({
       <div>
         <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Follow</h4>
         <div className="flex space-x-4 mb-6 text-stone-400">
-          <a href="#" className="hover:text-white transition-colors" aria-label="Facebook"><FacebookIcon size={18} /></a>
-          <a href="#" className="hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon size={18} /></a>
-          <a href="#" className="hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon size={18} /></a>
+          <a href="https://www.facebook.com/vizidcutie" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><FacebookIcon size={18} /></a>
+          <a href="https://www.instagram.com/vizid_decors?igsh=NWozdTA5Z3hrb3I5" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon size={18} /></a>
+          <a href="https://vm.tiktok.com/ZS9hB5GKDQ18c-XIBJD/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon size={18} /></a>
         </div>
-        <p className="text-xs text-stone-400 font-light leading-relaxed">
-          13884 S 2700 W<br />Bluffdale, UT 84065
-        </p>
       </div>
     </div>
 
@@ -1047,11 +1044,10 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
               Shop
             </h2>
             <h2 style={headingFont} className="text-4xl sm:text-5xl lg:text-[4.5rem] leading-none text-[#2C2C2C] font-normal mb-8">
-              McGee &amp; Co.
+              Vizid Designs
             </h2>
             <p className="text-xs sm:text-sm text-stone-800 font-light mb-10 leading-loose max-w-md">
-              <span style={headingFont} className="italic text-[17px] sm:text-[19px]">Heritage designs for today. </span>
-              Inspired by Shea's work with clients, the antique finds worth building a room around, the hand-finished details that make a house feel like home, McGee &amp; Co. brings that same designer perspective to home furnishings and décor.
+              Vizid Designs brings an elevated designer perspective to home furnishings and décor. From hand-finished details to timeless statement pieces, every element is curated to make your home feel extraordinary.
             </p>
             <button
               onClick={() => setCurrentPage('shop')}
@@ -1065,7 +1061,7 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
         <div className="w-full lg:w-1/2 relative min-h-[50vh] lg:min-h-full reveal-up">
           <AppImage
             src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1200"
-            alt="McGee & Co Living Room"
+            alt="Vizid Designs Living Room"
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-x-0 bottom-12 flex justify-center text-center">
@@ -1522,7 +1518,7 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
 
 // ReadPage imported from ReadPage.tsx
 
-const AboutPage = ({ headingFont }: { headingFont: React.CSSProperties }) => {
+const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProperties; setCurrentPage: (page: string) => void }) => {
   useIsomorphicLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const elements = document.querySelectorAll('.reveal-up');
@@ -1674,18 +1670,15 @@ const AboutPage = ({ headingFont }: { headingFont: React.CSSProperties }) => {
         </div>
       </section>
 
-      {/* Press / CTA strip */}
+      {/* CTA strip */}
       <section className="bg-[#4A4F4C] text-white py-20 sm:py-24 px-6 text-center">
         <div className="max-w-3xl mx-auto reveal-up">
-          <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-stone-400 mb-6">As Featured In</p>
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-12 text-stone-300 text-xs sm:text-sm tracking-[0.2em] uppercase font-medium mb-16">
-            {['Architectural Digest', 'Vogue', 'The New York Times', 'HGTV'].map((pub) => (
-              <span key={pub} className="opacity-70 hover:opacity-100 transition-opacity cursor-default">{pub}</span>
-            ))}
-          </div>
           <h2 style={headingFont} className="text-4xl sm:text-5xl font-light mb-6">Ready to Start Your Project?</h2>
           <p className="text-sm text-stone-400 font-light mb-10 max-w-lg mx-auto">Let's create a home that truly reflects who you are. Reach out to begin the conversation.</p>
-          <button className="border border-white/70 text-white px-10 py-4 text-[10px] tracking-[0.25em] uppercase font-medium hover:bg-white hover:text-[#4A4F4C] transition-all duration-300 rounded-sm">
+          <button
+            onClick={() => setCurrentPage('work')}
+            className="border border-white/70 text-white px-10 py-4 text-[10px] tracking-[0.25em] uppercase font-medium hover:bg-white hover:text-[#4A4F4C] transition-all duration-300 rounded-sm"
+          >
             Get In Touch
           </button>
         </div>
@@ -1792,7 +1785,7 @@ export default function App() {
       case 'portfolio':
         return <PortfolioPage headingFont={headingFont} />;
       case 'about':
-        return <AboutPage headingFont={headingFont} />;
+        return <AboutPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
       case 'read':
         return (
           <ReadPage

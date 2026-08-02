@@ -46,9 +46,8 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
     city: '',
     state: '',
     sqFt: '',
-    completionTimeframe: '',
-    budget: '',
     startTimeframe: '',
+    completionTimeframe: '',
     projectAlign: '',
     pinterestLink: '',
     mainReason: '',
@@ -667,14 +666,13 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
               </p>
             </div>
 
-            {/* Numbered Navigation Guide from Screenshot */}
+            {/* Numbered Navigation Guide */}
             <div className="space-y-4 pt-4 border-t border-stone-300/60">
               {[
-                { step: '1.', label: 'THE ESSENTIALS', id: 1 },
-                { step: '2.', label: 'YOUR HOME', id: 2 },
-                { step: '3.', label: 'BUDGET & TIMELINE', id: 3 },
-                { step: '4.', label: 'INSPIRATION', id: 4 },
-                { step: '5.', label: 'PROJECT OBJECTIVE', id: 5 },
+                { step: '1.', label: 'THE PROJECT', id: 1 },
+                { step: '2.', label: 'TIMELINE', id: 2 },
+                { step: '3.', label: 'INSPIRATION', id: 3 },
+                { step: '4.', label: 'A BIT MORE', id: 4 },
               ].map((item) => (
                 <div
                   key={item.id}
@@ -710,7 +708,7 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} className="space-y-8">
-                {/* 1. What type of design services */}
+                {/* What type of design services */}
                 <div className="space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-stone-800">
                     What type of design services
@@ -727,133 +725,185 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
                   </select>
                 </div>
 
-                {/* 2. Location & State */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* SECTION: The project */}
+                <div className="pt-4 border-t border-stone-200">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-stone-900 mb-6">The project</h4>
+                  
+                  <div className="space-y-6">
+                    {/* City */}
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                        City <span className="text-stone-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {/* State */}
+                      <div className="space-y-2">
+                        <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                          State <span className="text-stone-400">*</span>
+                        </label>
+                        <select
+                          name="state"
+                          value={formData.state}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                        >
+                          <option value="" disabled>Select State</option>
+                          <option value="Lagos">Lagos</option>
+                          <option value="Abuja (FCT)">Abuja (FCT)</option>
+                          <option value="Rivers">Rivers</option>
+                          <option value="Oyo">Oyo</option>
+                          <option value="Ogun">Ogun</option>
+                          <option value="Kano">Kano</option>
+                          <option value="Enugu">Enugu</option>
+                          <option value="Abia">Abia</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
+                      {/* Approximate size of home */}
+                      <div className="space-y-2">
+                        <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                          Approximate size of home <span className="text-stone-400">*</span>
+                        </label>
+                        <select
+                          name="sqFt"
+                          value={formData.sqFt}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                        >
+                          <option value="" disabled>Select approximate size</option>
+                          <option value="Under 100 sqm">Under 100 sqm</option>
+                          <option value="100–200 sqm">100–200 sqm</option>
+                          <option value="200–400 sqm">200–400 sqm</option>
+                          <option value="400+ sqm">400+ sqm</option>
+                          <option value="Not sure yet">Not sure yet</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION: Timeline */}
+                <div className="pt-4 border-t border-stone-200">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-stone-900 mb-6">Timeline</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* When would you like to start? */}
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                        When would you like to start? <span className="text-stone-400">*</span>
+                      </label>
+                      <select
+                        name="startTimeframe"
+                        value={formData.startTimeframe}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      >
+                        <option value="" disabled>Select start time</option>
+                        <option value="Immediately">Immediately</option>
+                        <option value="Within 1 month">Within 1 month</option>
+                        <option value="1–3 months">1–3 months</option>
+                        <option value="Just exploring">Just exploring</option>
+                      </select>
+                    </div>
+
+                    {/* Target completion */}
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                        Target completion <span className="text-stone-400">*</span>
+                      </label>
+                      <select
+                        name="completionTimeframe"
+                        value={formData.completionTimeframe}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      >
+                        <option value="" disabled>Select target completion</option>
+                        <option value="Within 3 months">Within 3 months</option>
+                        <option value="3–6 months">3–6 months</option>
+                        <option value="6–12 months">6–12 months</option>
+                        <option value="Flexible">Flexible</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION: Inspiration */}
+                <div className="pt-4 border-t border-stone-200">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-stone-900 mb-6">Inspiration</h4>
+                  
+                  <div className="space-y-6">
+                    {/* Which Vizid projects best align with your vision? */}
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                        Which Vizid projects best align with your vision?
+                      </label>
+                      <select
+                        name="projectAlign"
+                        value={formData.projectAlign}
+                        onChange={handleInputChange}
+                        className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      >
+                        <option value="">Select project type (optional)</option>
+                        <option value="Living room / lounge projects">Living room / lounge projects</option>
+                        <option value="Full home renovations">Full home renovations</option>
+                        <option value="Kitchen & dining spaces">Kitchen & dining spaces</option>
+                        <option value="Bedroom & suite designs">Bedroom & suite designs</option>
+                        <option value="None of these — something different">None of these — something different</option>
+                      </select>
+                    </div>
+
+                    {/* Pinterest board link */}
+                    <div className="space-y-2">
+                      <label className="block text-xs sm:text-sm font-medium text-stone-800">
+                        Pinterest board link
+                      </label>
+                      <input
+                        type="url"
+                        name="pinterestLink"
+                        value={formData.pinterestLink}
+                        onChange={handleInputChange}
+                        placeholder="https://pinterest.com/your-board"
+                        className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      />
+                      <p className="text-[11px] text-stone-500 font-light">
+                        If you've saved design inspiration somewhere, drop the link here.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION: A bit more */}
+                <div className="pt-4 border-t border-stone-200">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-stone-900 mb-6">A bit more</h4>
+                  
                   <div className="space-y-2">
                     <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      Project Location (City)
+                      What's the main reason you'd like to hire an interior designer? <span className="text-stone-400">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
+                    <textarea
+                      name="mainReason"
+                      value={formData.mainReason}
                       onChange={handleInputChange}
                       required
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
+                      rows={4}
+                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm resize-y"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Sq Ft & Completion Timeframe */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      Approximate Square Footage of Home
-                    </label>
-                    <input
-                      type="text"
-                      name="sqFt"
-                      value={formData.sqFt}
-                      onChange={handleInputChange}
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      Completion Timeframe
-                    </label>
-                    <input
-                      type="text"
-                      name="completionTimeframe"
-                      value={formData.completionTimeframe}
-                      onChange={handleInputChange}
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Budget & Start Timeframe */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      Construction Budget (Approx)
-                    </label>
-                    <input
-                      type="text"
-                      name="budget"
-                      value={formData.budget}
-                      onChange={handleInputChange}
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                      Start Timeframe
-                    </label>
-                    <input
-                      type="text"
-                      name="startTimeframe"
-                      value={formData.startTimeframe}
-                      onChange={handleInputChange}
-                      className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 5. Align Projects */}
-                <div className="space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                    Which Studio McGee Projects Best Align With Your Project?
-                  </label>
-                  <input
-                    type="text"
-                    name="projectAlign"
-                    value={formData.projectAlign}
-                    onChange={handleInputChange}
-                    className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                  />
-                </div>
-
-                {/* 6. Pinterest Link */}
-                <div className="space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                    If you have a Pinterest board to share your design inspiration, please link it here
-                  </label>
-                  <input
-                    type="text"
-                    name="pinterestLink"
-                    value={formData.pinterestLink}
-                    onChange={handleInputChange}
-                    placeholder="https://"
-                    className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 rounded-none shadow-sm"
-                  />
-                </div>
-
-                {/* 7. Main Reason */}
-                <div className="space-y-2">
-                  <label className="block text-xs sm:text-sm font-medium text-stone-800">
-                    What is the main reason you would like to hire an interior designer?
-                  </label>
-                  <textarea
-                    name="mainReason"
-                    value={formData.mainReason}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full p-3.5 bg-white border border-stone-300 text-xs sm:text-sm text-stone-800 focus:outline-none focus:border-stone-500 rounded-none shadow-sm resize-y"
-                  />
                 </div>
 
                 {/* Submit Button */}
