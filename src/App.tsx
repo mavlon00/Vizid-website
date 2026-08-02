@@ -1096,6 +1096,29 @@ const ShopPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState<string>('');
 
+  // Listen for Supabase auth state (handles Google OAuth redirect)
+  useEffect(() => {
+    // Check for existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        setIsSignInOpen(false);
+      }
+    });
+
+    // Subscribe to future auth changes (sign in / sign out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        setIsSignInOpen(false);
+      } else {
+        setUserEmail(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
     if (emailInput.trim()) {
@@ -1421,7 +1444,8 @@ const ShopPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
                   {userEmail}
                 </div>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    await supabase.auth.signOut();
                     setUserEmail(null);
                     setEmailInput('');
                   }}
