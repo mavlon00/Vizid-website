@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, ChevronRight, ChevronLeft, Filter, Heart } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, ChevronRight, ChevronLeft, Filter, Heart, CheckCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -12,6 +12,7 @@ import pexelsDrew from '../pexels-drewnii19-11334182.jpg';
 
 import { WorkWithUsPage } from './WorkWithUsPage';
 import { ReadPage } from './ReadPage';
+import { VizidDecorAcademyPage } from './VizidDecorAcademyPage';
 import { supabase } from './supabase';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -164,26 +165,23 @@ const Header = ({
             </div>
 
             <div className="flex items-center space-x-6 mr-8 border-l border-stone-500/50 pl-8 h-8">
-              <button onClick={() => handleNav('work')} className="text-white hover:text-stone-300 transition-colors" aria-label="Contact Vizid Studio">
-                <User size={18} />
+              <button onClick={() => handleNav('shop')} className="text-white hover:text-stone-300 transition-colors" aria-label="Shop">
+                <ShoppingBag size={18} />
               </button>
             </div>
 
             <div className="border-l border-stone-500/50 pl-8 h-8 flex flex-col justify-center items-start">
-              <button onClick={() => handleNav('shop')} className="text-[12px] tracking-[0.2em] uppercase font-medium hover:text-stone-300 transition-colors">
-                New Arrivals
+              <button onClick={() => handleNav('academy')} className="text-[11px] tracking-[0.15em] uppercase font-medium hover:text-stone-300 transition-colors">
+                Vizid Decor Academy
               </button>
-              <button onClick={() => handleNav('shop')} className="text-[8px] tracking-[0.2em] uppercase font-light text-stone-300 hover:text-white transition-colors">
-                Shop Now
+              <button onClick={() => handleNav('academy')} className="text-[8px] tracking-[0.2em] uppercase font-light text-stone-300 hover:text-white transition-colors">
+                Learn & Enroll
               </button>
             </div>
           </div>
 
           <div className="flex items-center space-x-4 lg:hidden">
-            <button onClick={() => handleNav('work')} className="p-1 text-white" aria-label="Contact Vizid Studio">
-              <User size={20} />
-            </button>
-            <button onClick={() => handleNav('shop')} className="p-1 text-white" aria-label="Shopping bag">
+            <button onClick={() => handleNav('shop')} className="p-1 text-white" aria-label="Shop">
               <ShoppingBag size={20} />
             </button>
           </div>
@@ -204,7 +202,7 @@ const Header = ({
           ))}
           <div className="pt-6 border-t border-stone-600 flex justify-between items-center text-xs text-stone-300">
             <button onClick={() => handleNav('work')} className="uppercase tracking-widest">Contact Us</button>
-            <button onClick={() => handleNav('shop')} className="uppercase tracking-widest">Shop New Arrivals</button>
+            <button onClick={() => handleNav('academy')} className="uppercase tracking-widest">Vizid Decor Academy</button>
           </div>
         </div>
       )}
@@ -220,71 +218,218 @@ const Footer = ({
   headingFont: React.CSSProperties;
   setCurrentPage?: (page: string) => void;
   setSelectedService?: (service: 'virtual' | 'full') => void;
-}) => (
-  <footer className="bg-[#2C2C2C] text-white pt-16 sm:pt-20 pb-10 px-6 sm:px-8 lg:px-12 w-full mt-auto">
-    <div className="max-w-[100rem] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-16 border-b border-stone-700">
-      <div className="lg:col-span-2 pr-0 lg:pr-12">
-        <div className="mb-4">
-          <img src={siteLogo} alt="Vizid" className="navbar-logo h-12" />
-          <p className="text-[9px] tracking-[0.25em] font-light text-stone-400 uppercase mt-0.5">
-            .....live luxury
+}) => {
+  const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'terms' | 'accessibility' | null>(null);
+  const [emailInput, setEmailInput] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [emailError, setEmailError] = useState('');
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = emailInput.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+    setEmailError('');
+    setNewsletterSubscribed(true);
+  };
+
+  return (
+    <footer className="bg-[#2C2C2C] text-white pt-16 sm:pt-20 pb-10 px-6 sm:px-8 lg:px-12 w-full mt-auto">
+      <div className="max-w-[100rem] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-16 border-b border-stone-700">
+        <div className="lg:col-span-2 pr-0 lg:pr-12">
+          <div className="mb-4">
+            <img src={siteLogo} alt="Vizid" className="navbar-logo h-12" />
+            <p className="text-[9px] tracking-[0.25em] font-light text-stone-400 uppercase mt-0.5">
+              .....live luxury
+            </p>
+          </div>
+          <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-md font-light mb-6">
+            Designing spaces that feel curated, cozy, and timeless. Join our newsletter to receive design tips, project reveals, and exclusive launches directly to your inbox.
           </p>
+          {newsletterSubscribed ? (
+            <div className="max-w-md space-y-3">
+              <div className="flex items-center space-x-2.5 text-xs text-emerald-400 bg-stone-800/90 p-3.5 border border-emerald-500/30">
+                <CheckCircle size={18} className="shrink-0 text-emerald-400" />
+                <span>You're subscribed! Welcome to the Vizid circle.</span>
+              </div>
+              <a
+                href={`https://wa.me/2348121819461?text=${encodeURIComponent(`✨ *NEW VIZID NEWSLETTER SUBSCRIBER*\n\n📧 *Email:* ${emailInput.trim()}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-[10px] tracking-[0.15em] uppercase font-medium text-stone-400 hover:text-white transition-colors"
+              >
+                Notify admin via WhatsApp →
+              </a>
+            </div>
+          ) : (
+            <form onSubmit={handleNewsletterSubmit} className="max-w-md space-y-1.5" noValidate>
+              <div className="flex">
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => {
+                    setEmailInput(e.target.value);
+                    if (emailError) setEmailError('');
+                  }}
+                  placeholder="Enter your email address"
+                  className="bg-stone-800 border border-stone-700 text-xs px-4 py-3 text-white placeholder-stone-500 focus:outline-none focus:border-stone-400 w-full"
+                />
+                <button
+                  type="submit"
+                  className="bg-stone-100 text-stone-900 text-[10px] tracking-[0.2em] uppercase font-semibold px-6 hover:bg-stone-300 transition-colors shrink-0"
+                >
+                  Join
+                </button>
+              </div>
+              {emailError && (
+                <p className="text-[10px] text-red-400 font-light">{emailError}</p>
+              )}
+            </form>
+          )}
         </div>
-        <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-md font-light mb-6">
-          Designing spaces that feel curated, cozy, and timeless. Join our newsletter to receive design tips, project reveals, and exclusive launches directly to your inbox.
-        </p>
-        <div className="flex max-w-md">
-          <input
-            type="email"
-            placeholder="Enter your email address"
-            className="bg-stone-800 border border-stone-700 text-xs px-4 py-3 text-white placeholder-stone-500 focus:outline-none focus:border-stone-400 w-full"
-          />
-          <button className="bg-stone-100 text-stone-900 text-[10px] tracking-[0.2em] uppercase font-semibold px-6 hover:bg-stone-300 transition-colors shrink-0">
-            Join
+
+        <div>
+          <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Explore</h4>
+          <ul className="space-y-2.5 text-xs text-stone-400 font-light">
+            <li><button onClick={() => setCurrentPage?.('portfolio')} className="hover:text-white transition-colors">Our Portfolio</button></li>
+            <li><button onClick={() => setCurrentPage?.('read')} className="hover:text-white transition-colors">The Journal</button></li>
+            <li><button onClick={() => setCurrentPage?.('about')} className="hover:text-white transition-colors">About Vizid</button></li>
+            <li><button onClick={() => setCurrentPage?.('work')} className="hover:text-white transition-colors">Work With Us</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Services</h4>
+          <ul className="space-y-2.5 text-xs text-stone-400 font-light">
+            <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('full'); }} className="hover:text-white transition-colors">Full-Service Design</button></li>
+            <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('virtual'); }} className="hover:text-white transition-colors">Virtual Consultations</button></li>
+            <li><button onClick={() => setCurrentPage?.('academy')} className="hover:text-white transition-colors">Vizid Decor Academy</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Follow</h4>
+          <div className="flex space-x-4 mb-6 text-stone-400">
+            <a href="https://www.facebook.com/vizidcutie" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><FacebookIcon size={18} /></a>
+            <a href="https://www.instagram.com/vizid_decors?igsh=NWozdTA5Z3hrb3I5" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon size={18} /></a>
+            <a href="https://vm.tiktok.com/ZS9hB5GKDQ18c-XIBJD/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon size={18} /></a>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[100rem] mx-auto pt-8 flex flex-col md:flex-row justify-between items-center text-[11px] sm:text-xs text-stone-400 font-light space-y-4 md:space-y-0 text-center md:text-left">
+        <p>© {new Date().getFullYear()} Vizid. All rights reserved.</p>
+        <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-3">
+          <button
+            onClick={() => setActiveLegalModal('privacy')}
+            className="hover:text-white transition-colors underline-offset-4 hover:underline cursor-pointer"
+          >
+            Privacy Policy
+          </button>
+          <button
+            onClick={() => setActiveLegalModal('terms')}
+            className="hover:text-white transition-colors underline-offset-4 hover:underline cursor-pointer"
+          >
+            Terms of Service
+          </button>
+          <button
+            onClick={() => setActiveLegalModal('accessibility')}
+            className="hover:text-white transition-colors underline-offset-4 hover:underline cursor-pointer"
+          >
+            Accessibility Statement
           </button>
         </div>
       </div>
 
-      <div>
-        <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Explore</h4>
-        <ul className="space-y-2.5 text-xs text-stone-400 font-light">
-          <li><button onClick={() => setCurrentPage?.('portfolio')} className="hover:text-white transition-colors">Our Portfolio</button></li>
-          <li><button onClick={() => setCurrentPage?.('read')} className="hover:text-white transition-colors">The Journal</button></li>
-          <li><button onClick={() => setCurrentPage?.('about')} className="hover:text-white transition-colors">About Vizid</button></li>
-          <li><button onClick={() => setCurrentPage?.('work')} className="hover:text-white transition-colors">Work With Us</button></li>
-        </ul>
-      </div>
+      {/* Legal Modals */}
+      {activeLegalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#FAF9F7] text-[#2C2C2C] max-w-2xl w-full p-6 sm:p-10 relative border border-stone-300 shadow-2xl max-h-[85vh] overflow-y-auto rounded-none">
+            <button
+              onClick={() => setActiveLegalModal(null)}
+              className="absolute top-6 right-6 p-2 text-stone-500 hover:text-stone-900 transition-colors"
+              aria-label="Close dialog"
+            >
+              <X size={22} />
+            </button>
 
-      <div>
-        <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Services</h4>
-        <ul className="space-y-2.5 text-xs text-stone-400 font-light">
-          <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('full'); }} className="hover:text-white transition-colors">Full-Service Design</button></li>
-          <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('virtual'); }} className="hover:text-white transition-colors">Virtual Consultations</button></li>
-          <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('virtual'); }} className="hover:text-white transition-colors">Trade Program</button></li>
-          <li><button onClick={() => { setCurrentPage?.('work'); setSelectedService?.('full'); }} className="hover:text-white transition-colors">Commercial Projects</button></li>
-        </ul>
-      </div>
+            {activeLegalModal === 'privacy' && (
+              <div className="space-y-6">
+                <div>
+                  <span className="text-[10px] tracking-[0.25em] font-semibold uppercase text-stone-500">Vizid Studio Governance</span>
+                  <h3 style={headingFont} className="text-3xl font-normal text-[#2C2C2C] mt-1">Privacy Policy</h3>
+                  <p className="text-[11px] text-stone-500 mt-1">Last Updated: August 2026</p>
+                </div>
+                <div className="space-y-4 text-xs sm:text-sm text-stone-600 font-light leading-relaxed">
+                  <p>Vizid Studio ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">1. Information We Collect</h4>
+                  <p>We collect information you provide directly through inquiry forms, newsletter signups, and Vizid Decor Academy applications—including name, email address, phone number, location, and project preferences.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">2. How We Use Information</h4>
+                  <p>Your details are used exclusively to provide bespoke interior design consultations, deliver academy programs, process trade requests, and send studio updates. We do not sell or rent your personal data to third parties.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">3. Data Security & Storage</h4>
+                  <p>We implement technical and organizational security measures to protect your information against unauthorized access, alteration, or disclosure.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">4. Contact Us</h4>
+                  <p>If you have questions regarding this Privacy Policy, please contact privacy@vizid.studio or WhatsApp us at +234 812 181 9461.</p>
+                </div>
+              </div>
+            )}
 
-      <div>
-        <h4 className="text-[11px] tracking-[0.2em] uppercase font-bold text-stone-300 mb-4">Follow</h4>
-        <div className="flex space-x-4 mb-6 text-stone-400">
-          <a href="https://www.facebook.com/vizidcutie" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><FacebookIcon size={18} /></a>
-          <a href="https://www.instagram.com/vizid_decors?igsh=NWozdTA5Z3hrb3I5" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon size={18} /></a>
-          <a href="https://vm.tiktok.com/ZS9hB5GKDQ18c-XIBJD/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon size={18} /></a>
+            {activeLegalModal === 'terms' && (
+              <div className="space-y-6">
+                <div>
+                  <span className="text-[10px] tracking-[0.25em] font-semibold uppercase text-stone-500">Vizid Studio Governance</span>
+                  <h3 style={headingFont} className="text-3xl font-normal text-[#2C2C2C] mt-1">Terms of Service</h3>
+                  <p className="text-[11px] text-stone-500 mt-1">Last Updated: August 2026</p>
+                </div>
+                <div className="space-y-4 text-xs sm:text-sm text-stone-600 font-light leading-relaxed">
+                  <p>By accessing the Vizid Studio website or enrolling in Vizid Decor Academy, you agree to comply with and be bound by the following terms.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">1. Scope of Services</h4>
+                  <p>Design consultations, virtual spatial plans, and full-service residential interior projects are performed under separate project contracts specifying scope, deliverables, and timelines.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">2. Intellectual Property</h4>
+                  <p>All design concepts, 3D renderings, mood boards, photography, logo marks, and educational materials displayed on this platform remain the exclusive intellectual property of Vizid Studio.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">3. Academy Enrollment</h4>
+                  <p>Enrollment in Vizid Decor Academy grants non-exclusive access to course modules and studio mentorship. Course assets and proprietary curriculum may not be redistributed.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">4. Governing Law</h4>
+                  <p>These terms shall be governed and construed in accordance with applicable laws governing professional interior design practices.</p>
+                </div>
+              </div>
+            )}
+
+            {activeLegalModal === 'accessibility' && (
+              <div className="space-y-6">
+                <div>
+                  <span className="text-[10px] tracking-[0.25em] font-semibold uppercase text-stone-500">Inclusive Design</span>
+                  <h3 style={headingFont} className="text-3xl font-normal text-[#2C2C2C] mt-1">Accessibility Statement</h3>
+                  <p className="text-[11px] text-stone-500 mt-1">Last Updated: August 2026</p>
+                </div>
+                <div className="space-y-4 text-xs sm:text-sm text-stone-600 font-light leading-relaxed">
+                  <p>Vizid Studio is committed to digital accessibility and ensuring that our online platform is accessible to individuals of all abilities, adhering to WCAG 2.1 Level AA recommendations.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">1. Accessibility Features</h4>
+                  <p>Our website incorporates semantic HTML structure, high color contrast ratios, screen-reader aria labels, responsive layouts across all device viewports, and keyboard focus states.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">2. Ongoing Improvements</h4>
+                  <p>We continually monitor and update our interfaces to ensure seamless usability for users leveraging screen readers, keyboard-only navigation, or custom display settings.</p>
+                  <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">3. Feedback & Assistance</h4>
+                  <p>If you experience any accessibility barriers while navigating our site, please reach out to us at accessibility@vizid.studio or WhatsApp +234 812 181 9461 for direct assistance.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-stone-200 text-right">
+              <button
+                onClick={() => setActiveLegalModal(null)}
+                className="bg-[#2C2C2C] text-white text-xs tracking-[0.2em] uppercase font-semibold px-8 py-3 hover:bg-stone-800 transition-colors"
+              >
+                Close Statement
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <div className="max-w-[100rem] mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center text-[10px] text-stone-500 font-light space-y-4 sm:space-y-0">
-      <p>© {new Date().getFullYear()} Vizid. All rights reserved.</p>
-      <div className="flex space-x-6">
-        <a href="#" className="hover:text-stone-300">Privacy Policy</a>
-        <a href="#" className="hover:text-stone-300">Terms of Service</a>
-        <a href="#" className="hover:text-stone-300">Accessibility Statement</a>
-      </div>
-    </div>
-  </footer>
-);
+      )}
+    </footer>
+  );
+};
 
 const HorizontalGallery = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProperties; setCurrentPage: (page: string) => void; }) => {
   const portfolioProjects = [
@@ -1076,447 +1221,921 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
   );
 };
 
+/* ─── Types ─── */
 interface ShopProduct {
   id: number;
   name: string;
   category: string;
-  price: string;
+  priceNaira: number;   // price in Naira
   img: string;
   badge?: string;
   secondaryBadge?: string;
+  description?: string;
+  height?: 'short' | 'tall' | 'medium'; // for masonry variety
 }
 
-const ShopPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProperties; setCurrentPage?: (page: string) => void; }) => {
-  const [activeCategory, setActiveCategory] = useState<string>('All Products');
-  const [gridCols, setGridCols] = useState<number>(3);
-  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
-  const [cartItemsCount, setCartItemsCount] = useState<number>(0);
-  const [addedItemName, setAddedItemName] = useState<string | null>(null);
-  const [isSignInOpen, setIsSignInOpen] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [emailInput, setEmailInput] = useState<string>('');
+interface CartItem extends ShopProduct {
+  qty: number;
+}
 
-  // Listen for Supabase auth state (handles Google OAuth redirect)
-  useEffect(() => {
-    // Check for existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
-        setIsSignInOpen(false);
-      }
-    });
+/* ─── Helpers ─── */
+const formatNaira = (n: number) =>
+  '₦' + n.toLocaleString('en-NG');
 
-    // Subscribe to future auth changes (sign in / sign out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
-        setIsSignInOpen(false);
-      } else {
-        setUserEmail(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emailInput.trim()) {
-      setUserEmail(emailInput.trim());
-      setIsSignInOpen(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await supabase.auth.signInWithOAuth({ provider: 'google' });
-    } catch (error) {
-      console.error('Google sign in error:', error);
-    }
-  };
-
-  const roomCategories = [
-    { name: 'Dining Room', category: 'Furniture', img: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&q=80&w=800' },
-    { name: 'Living Room', category: 'Furniture', img: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=800' },
-    { name: 'Tabletop', category: 'Decor & Mirrors', img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800' },
-    { name: 'Decor', category: 'Decor & Mirrors', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&q=80&w=800' },
-    { name: 'Bedroom', category: 'Furniture', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=800' },
-    { name: 'Curated by Shea', category: 'All Products', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800' }
-  ];
-
-  const filterAccordionItems = [
-    'Product type', 'Availability', 'Price', 'Fabric', 'Finish', 'Size', 'Material', 'Technique', 'Configuration', 'Color', 'Bedding Fabric'
-  ];
-
-  const products: ShopProduct[] = [
-    { id: 1, name: 'Antoinette Coffee Table Ottoman', price: '$1,995.00', category: 'Furniture', badge: 'Curated by Shea', secondaryBadge: 'New', img: 'https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&q=80&w=800' },
-    { id: 2, name: 'Striped Oak & Linen Memo Board', price: '$268.00', category: 'Decor & Mirrors', badge: 'New', img: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&q=80&w=800' },
-    { id: 3, name: 'Rafaella Dining Chair', price: '$895.00', category: 'Furniture', badge: 'Curated by Shea', secondaryBadge: 'New', img: 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=800' },
-    { id: 4, name: 'Howell Upholstered Sofa', price: '$2,400.00', category: 'Furniture', badge: 'New', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800' },
-    { id: 5, name: 'Arch Brass Wall Mirror', price: '$580.00', category: 'Decor & Mirrors', badge: 'Curated by Shea', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=800' },
-    { id: 6, name: 'Ceramic Table Lamp', price: '$350.00', category: 'Lighting', badge: 'New', img: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800' },
-    { id: 7, name: 'Woven Neutral Area Rug', price: '$899.00', category: 'Rugs', badge: 'Curated by Shea', img: 'https://images.unsplash.com/photo-1575037614876-c385bbd82ef5?auto=format&fit=crop&q=80&w=800' },
-    { id: 8, name: 'Abstract Layered Wall Art', price: '$650.00', category: 'Art', badge: 'New', img: 'https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?auto=format&fit=crop&q=80&w=800' },
-    { id: 9, name: 'Vintage Walnut Sideboard', price: '$2,850.00', category: 'Furniture', badge: 'Curated by Shea', img: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80&w=800' }
-  ];
-
-  const filteredProducts = products.filter(
-    (p) => activeCategory === 'All Products' || p.category === activeCategory
-  );
-
-  const toggleAccordion = (name: string) => {
-    setOpenAccordions((prev) =>
-      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name]
-    );
-  };
-
-  const handleAddToCart = (name: string) => {
-    if (!userEmail) {
-      setIsSignInOpen(true);
-      return;
-    }
-    setCartItemsCount((prev) => prev + 1);
-    setAddedItemName(name);
-    setTimeout(() => setAddedItemName(null), 3000);
-  };
-
-  const handleIconAction = () => {
-    if (!userEmail) {
-      setIsSignInOpen(true);
-    } else {
-      setActiveCategory('All Products');
-    }
-  };
-
-  useIsomorphicLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const elements = document.querySelectorAll('.reveal-up');
-      elements.forEach((el, index) => {
-        gsap.fromTo(
-          el,
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.6,
-            ease: 'power2.out',
-            delay: (index % 4) * 0.05
-          }
-        );
-      });
-    });
-    return () => ctx.revert();
-  }, [activeCategory]);
+/* ─── Cart Drawer (Jumia-style) ─── */
+const CartDrawer = ({
+  open,
+  onClose,
+  items,
+  onRemove,
+  onChangeQty,
+  headingFont,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items: CartItem[];
+  onRemove: (id: number) => void;
+  onChangeQty: (id: number, delta: number) => void;
+  headingFont: React.CSSProperties;
+}) => {
+  const total = items.reduce((sum, i) => sum + i.priceNaira * i.qty, 0);
 
   return (
-    <div className="w-full bg-white min-h-screen text-stone-900 overflow-x-hidden pt-4">
-      {/* SUB-CATEGORY NAV LINKS BAR */}
-      <div className="bg-white border-b border-stone-200 py-3 px-4 sm:px-8 text-[11px] font-medium text-stone-800 uppercase tracking-wider overflow-x-auto flex justify-center space-x-6 sm:space-x-8 whitespace-nowrap">
-        <button onClick={() => setActiveCategory('All Products')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'All Products' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>New!</button>
-        <button onClick={() => setActiveCategory('Furniture')} className="hover:text-stone-500 transition-colors">Best Sellers</button>
-        <button onClick={() => setActiveCategory('Furniture')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'Furniture' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>Furniture</button>
-        <button onClick={() => setActiveCategory('Furniture')} className="hover:text-stone-500 transition-colors">Outdoor</button>
-        <button onClick={() => setActiveCategory('Lighting')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'Lighting' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>Lighting</button>
-        <button onClick={() => setActiveCategory('Rugs')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'Rugs' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>Rugs</button>
-        <button onClick={() => setActiveCategory('Decor & Mirrors')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'Decor & Mirrors' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>Decor &amp; Pillows</button>
-        <button onClick={() => setActiveCategory('Art')} className={`hover:text-stone-500 transition-colors ${activeCategory === 'Art' ? 'border-b-2 border-stone-900 pb-1 font-bold' : ''}`}>Wall Decor</button>
-        <button onClick={() => setActiveCategory('Furniture')} className="hover:text-stone-500 transition-colors">Bed &amp; Bath</button>
-        <button onClick={() => setActiveCategory('Decor & Mirrors')} className="hover:text-stone-500 transition-colors">Kitchen &amp; Dining</button>
-        <button onClick={() => setActiveCategory('Decor & Mirrors')} className="hover:text-stone-500 transition-colors">Kids</button>
-        <button onClick={() => setActiveCategory('All Products')} className="text-amber-800 hover:text-amber-900 font-semibold transition-colors">Clearance</button>
-      </div>
+    <>
+      {/* Overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[90] transition-opacity"
+          onClick={onClose}
+        />
+      )}
 
-      {/* MAIN TITLE MATCHING SCREENSHOT 1 WITH TOP RIGHT SHOP ACTION ICONS */}
-      <div className="w-full px-4 sm:px-8 mb-8 flex justify-between items-center">
-        <h1 style={headingFont} className="text-4xl sm:text-5xl lg:text-6xl text-[#2C2C2C] font-normal">
-          {activeCategory === 'All Products' ? 'All New Arrivals' : activeCategory}
-        </h1>
-
-        {/* TOP RIGHT CORNER ICONS OF THE SHOP SECTION */}
-        <div className="flex items-center space-x-5 text-stone-800">
-          <button onClick={() => setIsSignInOpen(true)} className="hover:text-stone-500 transition-colors p-1 relative" aria-label="Sign In">
-            <User size={22} />
-            {userEmail && (
-              <span className="absolute -top-0.5 -right-0.5 bg-emerald-600 w-2.5 h-2.5 rounded-full border border-white"></span>
-            )}
-          </button>
-          <button onClick={handleIconAction} className="hover:text-stone-500 transition-colors p-1 relative" aria-label="Saved Wishlist">
-            <Heart size={22} />
-          </button>
-          <button onClick={handleIconAction} className="hover:text-stone-500 transition-colors p-1 relative" aria-label="Shopping Cart">
-            <ShoppingBag size={22} />
-            {cartItemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-stone-900 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                {cartItemsCount}
+      {/* Drawer */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full max-w-md bg-white z-[100] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-[#f7f7f7]">
+          <div className="flex items-center gap-2">
+            <ShoppingBag size={20} className="text-[#4A4F4C]" />
+            <span className="font-bold text-[#2C2C2C] text-base" style={headingFont}>
+              My Cart
+            </span>
+            {items.length > 0 && (
+              <span className="bg-[#f68b1e] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {items.reduce((s, i) => s + i.qty, 0)}
               </span>
             )}
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-200 rounded-full transition-colors"
+          >
+            <X size={18} className="text-gray-600" />
           </button>
         </div>
-      </div>
 
-      {/* 3. ROOM CATEGORIES STRIP FULL WIDTH MATCHING SCREENSHOT 1 */}
-      <div className="w-full px-4 sm:px-8 mb-16 relative">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          {roomCategories.map((room, idx) => (
-            <div
-              key={idx}
-              onClick={() => setActiveCategory(room.category)}
-              className="cursor-pointer group text-left reveal-up"
-            >
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-stone-100 mb-2.5 shadow-xs rounded-none">
-                <AppImage
-                  src={room.img}
-                  alt={room.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-              </div>
-              <p className="text-xs sm:text-sm text-stone-900 font-normal group-hover:text-stone-600 transition-colors">
-                {room.name}
-              </p>
+        {/* Items */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+              <ShoppingBag size={56} className="text-gray-200" />
+              <p className="text-gray-500 text-sm font-medium">Your cart is empty</p>
+              <p className="text-gray-400 text-xs">Add items from the shop to get started</p>
+              <button
+                onClick={onClose}
+                className="mt-2 px-6 py-2.5 bg-[#f68b1e] text-white text-xs font-semibold uppercase tracking-wider rounded hover:bg-orange-500 transition-colors"
+              >
+                Continue Shopping
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. FILTER BAR & PRODUCT COUNT MATCHING SCREENSHOT 2 */}
-      <div className="border-t border-b border-stone-200 bg-white py-3.5 px-4 sm:px-8 sticky top-20 z-30 shadow-xs w-full">
-        <div className="w-full flex items-center justify-between">
-          {/* Left Grid Layout Toggle Icons */}
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setGridCols(2)}
-              className={`p-1.5 border transition-colors ${gridCols === 2 ? 'border-stone-900 bg-stone-100 text-stone-900' : 'border-stone-300 text-stone-400'}`}
-              aria-label="2 Columns"
-            >
-              <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-                <div className="bg-current"></div>
-                <div className="bg-current"></div>
-              </div>
-            </button>
-            <button
-              onClick={() => setGridCols(3)}
-              className={`p-1.5 border transition-colors ${gridCols === 3 ? 'border-stone-900 bg-stone-100 text-stone-900' : 'border-stone-300 text-stone-400'}`}
-              aria-label="3 Columns"
-            >
-              <div className="w-4 h-4 grid grid-cols-3 gap-0.5">
-                <div className="bg-current"></div>
-                <div className="bg-current"></div>
-                <div className="bg-current"></div>
-              </div>
-            </button>
-          </div>
-
-          {/* Center Product Count */}
-          <span className="text-xs text-stone-500 font-light">
-            {filteredProducts.length} products
-          </span>
-
-          {/* Right Sort By Dropdown */}
-          <div className="flex items-center space-x-2 text-xs text-stone-700">
-            <span>Sort by</span>
-            <select className="bg-transparent font-medium border-none focus:outline-none cursor-pointer pr-2">
-              <option>Featured</option>
-              <option>Newest</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. MAIN CONTENT SIDEBAR & PRODUCT CATALOG GRID (SCREENSHOT 2 FULL WIDTH) */}
-      <div className="w-full px-4 sm:px-8 py-10 flex flex-col lg:flex-row gap-8 lg:gap-12">
-        {/* Left Sidebar Filter Accordions */}
-        <div className="w-full lg:w-64 shrink-0 text-left">
-          <div className="space-y-4 border-t border-stone-200">
-            {filterAccordionItems.map((item) => {
-              const isOpen = openAccordions.includes(item);
-              return (
-                <div key={item} className="border-b border-stone-200 pb-3.5 pt-3">
-                  <button
-                    onClick={() => toggleAccordion(item)}
-                    className="w-full flex justify-between items-center text-sm sm:text-base font-medium text-stone-900 hover:text-stone-600 transition-colors"
-                  >
-                    <span>{item}</span>
-                    <span className="text-stone-500 text-sm font-light">{isOpen ? '−' : '∨'}</span>
-                  </button>
-                  {isOpen && (
-                    <div className="mt-3.5 pl-2 space-y-2.5 text-xs sm:text-sm text-stone-600 font-light">
-                      <label className="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="checkbox" className="rounded-none border-stone-300 w-4 h-4" />
-                        <span>All Options</span>
-                      </label>
-                      <label className="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="checkbox" className="rounded-none border-stone-300 w-4 h-4" />
-                        <span>In Stock Only</span>
-                      </label>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right Product Grid Catalog */}
-        <div className="flex-grow">
-          <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-x-8 gap-y-12`}>
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="group cursor-pointer text-left reveal-up">
-                {/* Image Container with Badges & Hover Add To Cart */}
-                <div className="relative aspect-[4/5] w-full bg-stone-100 overflow-hidden mb-4 rounded-xs shadow-xs">
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.id}
+                className="flex gap-3 bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow"
+              >
+                {/* Image */}
+                <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                   <AppImage
-                    src={product.img}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    src={item.img}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
                   />
+                </div>
 
-                  {/* Top Badges matching Screenshot 2 */}
-                  <div className="absolute top-3 left-3 flex flex-col space-y-1.5 z-10">
-                    {product.badge && (
-                      <span className="bg-white/90 backdrop-blur-md text-stone-900 text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 border border-stone-200">
-                        {product.badge}
-                      </span>
-                    )}
-                    {product.secondaryBadge && (
-                      <span className="bg-white/90 backdrop-blur-md text-stone-900 text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 border border-stone-200">
-                        {product.secondaryBadge}
-                      </span>
-                    )}
-                  </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-[#2C2C2C] leading-tight line-clamp-2">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">{item.category}</p>
+                  <p className="text-[#f68b1e] font-bold text-sm mt-1">
+                    {formatNaira(item.priceNaira)}
+                  </p>
 
-                  {/* White Add to Cart Hover Button matching Screenshot 2 */}
-                  <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* Qty + Remove */}
+                  <div className="flex items-center justify-between mt-2">
+                    {/* Qty stepper */}
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => onChangeQty(item.id, -1)}
+                        className="w-7 h-7 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm transition-colors"
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center text-sm font-semibold text-[#2C2C2C]">
+                        {item.qty}
+                      </span>
+                      <button
+                        onClick={() => onChangeQty(item.id, 1)}
+                        className="w-7 h-7 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-sm transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Remove */}
                     <button
-                      onClick={() => handleAddToCart(product.name)}
-                      className="w-full bg-white text-stone-900 text-[10px] tracking-[0.2em] font-semibold uppercase py-3 shadow-md hover:bg-[#2C2C2C] hover:text-white transition-colors duration-300"
+                      onClick={() => onRemove(item.id)}
+                      className="text-[11px] text-red-500 hover:text-red-700 font-medium flex items-center gap-1 transition-colors"
                     >
-                      ADD TO CART
+                      <X size={12} />
+                      Remove
                     </button>
                   </div>
                 </div>
-
-                {/* Text Details matching Screenshot 2 */}
-                <h3 className="text-xs sm:text-sm text-stone-900 font-normal leading-snug mb-1">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-stone-600 font-light">
-                  {product.price}
-                </p>
               </div>
-            ))}
+            ))
+          )}
+        </div>
+
+        {/* Footer / Summary */}
+        {items.length > 0 && (
+          <div className="border-t border-gray-200 px-5 py-4 bg-[#f7f7f7] space-y-3">
+            {/* Summary rows */}
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
+              <span className="font-semibold text-[#2C2C2C]">{formatNaira(total)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Delivery fee</span>
+              <span className="text-green-600 font-medium">Free</span>
+            </div>
+            <div className="flex justify-between text-base font-bold text-[#2C2C2C] pt-1 border-t border-gray-200">
+              <span>Total</span>
+              <span className="text-[#f68b1e]">{formatNaira(total)}</span>
+            </div>
+
+            {/* CTA */}
+            <button className="w-full bg-[#f68b1e] hover:bg-orange-500 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide uppercase transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
+              <CheckCircle size={16} />
+              Proceed to Checkout
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full border border-gray-300 text-gray-600 hover:bg-gray-100 font-medium py-2.5 rounded-xl text-sm transition-colors"
+            >
+              Continue Shopping
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+/* ─── Product Detail Modal ─── */
+const ProductDetailModal = ({
+  product,
+  onClose,
+  onAddToCart,
+  isWishlisted,
+  onToggleWishlist,
+  headingFont,
+}: {
+  product: ShopProduct;
+  onClose: () => void;
+  onAddToCart: (p: ShopProduct) => void;
+  isWishlisted: boolean;
+  onToggleWishlist: (id: number) => void;
+  headingFont: React.CSSProperties;
+}) => {
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = () => {
+    for (let i = 0; i < qty; i++) onAddToCart(product);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-fadeIn"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: '90vh' }}
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-gray-100 p-2 rounded-full shadow-md transition-colors"
+        >
+          <X size={18} className="text-gray-700" />
+        </button>
+
+        {/* Image */}
+        <div className="md:w-1/2 bg-gray-100 relative overflow-hidden" style={{ minHeight: 300 }}>
+          <AppImage
+            src={product.img}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            style={{ minHeight: 300 }}
+          />
+          {/* Wishlist on modal */}
+          <button
+            onClick={() => onToggleWishlist(product.id)}
+            className="absolute top-4 left-4 bg-white/90 hover:bg-white p-2.5 rounded-full shadow-md transition-all"
+          >
+            <Heart
+              size={20}
+              className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-500'}
+            />
+          </button>
+          {product.badge && (
+            <span className="absolute bottom-4 left-4 bg-[#f68b1e] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+              {product.badge}
+            </span>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="md:w-1/2 p-7 flex flex-col justify-between overflow-y-auto">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-medium mb-1">
+              {product.category}
+            </p>
+            <h2 style={headingFont} className="text-2xl md:text-3xl text-[#2C2C2C] font-normal leading-tight mb-3">
+              {product.name}
+            </h2>
+
+            {/* Price badge */}
+            <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-full px-4 py-1.5 mb-5">
+              <svg className="w-4 h-4 text-[#f68b1e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M3 5a2 2 0 012-2h4.586a1 1 0 01.707.293l9.414 9.414a2 2 0 010 2.828l-4.586 4.586a2 2 0 01-2.828 0L3.707 8.707A1 1 0 013 8V5z" />
+              </svg>
+              <span className="text-[#f68b1e] font-bold text-xl">{formatNaira(product.priceNaira)}</span>
+            </div>
+
+            <p className="text-sm text-gray-500 font-light leading-relaxed mb-6">
+              {product.description ||
+                'A beautifully crafted piece designed to elevate any interior space. Each item is carefully selected to reflect timeless elegance and modern luxury.'}
+            </p>
+
+            {/* Qty selector */}
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-xs uppercase tracking-widest font-medium text-gray-500">Qty</span>
+              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  className="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg transition-colors"
+                >
+                  −
+                </button>
+                <span className="w-10 text-center text-sm font-bold text-[#2C2C2C]">{qty}</span>
+                <button
+                  onClick={() => setQty((q) => q + 1)}
+                  className="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold text-lg transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Added Item Notification Toast */}
-          {addedItemName && (
-            <div className="fixed bottom-6 right-6 z-50 bg-stone-900 text-white px-5 py-3 shadow-xl text-xs font-light flex items-center space-x-3 border border-stone-700 animate-fadeIn">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>Added <strong>{addedItemName}</strong> to cart</span>
+          {/* Actions */}
+          <div className="space-y-3">
+            <button
+              onClick={handleAdd}
+              className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-200 shadow-lg ${
+                added
+                  ? 'bg-green-500 text-white shadow-green-200'
+                  : 'bg-[#2C2C2C] hover:bg-[#f68b1e] text-white shadow-gray-200 hover:shadow-orange-200'
+              }`}
+            >
+              {added ? (
+                <><CheckCircle size={16} /> Added to Cart!</>
+              ) : (
+                <><ShoppingBag size={16} /> Add to Cart</>
+              )}
+            </button>
+            <button
+              onClick={() => onToggleWishlist(product.id)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 hover:border-red-400 text-gray-600 hover:text-red-500 font-medium text-sm transition-all"
+            >
+              <Heart size={15} className={isWishlisted ? 'fill-red-500 text-red-500' : ''} />
+              {isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Studio McGee-style Product Card ─── */
+const ShopCard = ({
+  product,
+  isWishlisted,
+  onToggleWishlist,
+  onAddToCart,
+  onClick,
+}: {
+  product: ShopProduct;
+  isWishlisted: boolean;
+  onToggleWishlist: (id: number) => void;
+  onAddToCart: (p: ShopProduct) => void;
+  onClick: () => void;
+}) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      className="shop-card group cursor-pointer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Square Image container */}
+      <div
+        className="relative w-full overflow-hidden bg-[#f5f3f0]"
+        style={{ aspectRatio: '1 / 1' }}
+        onClick={onClick}
+      >
+        <AppImage
+          src={product.img}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
+
+        {/* Badge chips */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          {product.badge && (
+            <span className="bg-white text-[#2C2C2C] text-[9px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 shadow-sm">
+              {product.badge}
+            </span>
+          )}
+        </div>
+
+        {/* Wishlist */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleWishlist(product.id); }}
+          className={`absolute top-3 right-3 p-2 bg-white shadow-sm transition-all duration-200 ${
+            isWishlisted ? 'opacity-100' : hovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <Heart
+            size={15}
+            className={isWishlisted ? 'fill-[#8B6F47] text-[#8B6F47]' : 'text-[#2C2C2C]'}
+          />
+        </button>
+
+        {/* Add to Cart — slide up */}
+        <div
+          className="absolute bottom-0 left-0 right-0 transition-all duration-300 ease-out"
+          style={{
+            transform: hovered ? 'translateY(0)' : 'translateY(100%)',
+            opacity: hovered ? 1 : 0,
+          }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+            className="w-full bg-white/95 hover:bg-[#2C2C2C] hover:text-white text-[#2C2C2C] text-[10px] font-semibold uppercase tracking-[0.18em] py-3.5 transition-all duration-200 flex items-center justify-center gap-2 backdrop-blur-sm"
+          >
+            <ShoppingBag size={12} />
+            Add to Cart
+          </button>
+        </div>
+      </div>
+
+      {/* Card info below image */}
+      <div className="pt-3 pb-1">
+        <p className="text-[12px] text-stone-500 uppercase tracking-[0.12em] font-medium mb-1">
+          {product.category}
+        </p>
+        <p className="text-[14px] text-[#2C2C2C] leading-snug mb-2 font-light">
+          {product.name}
+        </p>
+        <p className="text-[13px] text-[#2C2C2C] font-medium">
+          {formatNaira(product.priceNaira)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ─── ShopPage ─── */
+const ShopPage = ({
+  headingFont,
+  setCurrentPage,
+}: {
+  headingFont: React.CSSProperties;
+  setCurrentPage?: (page: string) => void;
+}) => {
+  const [activeCategory, setActiveCategory] = useState<string>('New');
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<Set<number>>(new Set());
+  const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [addedToast, setAddedToast] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const products: ShopProduct[] = [];
+
+  const navTabs = [
+    'New',
+    'Furniture',
+    'Outdoor',
+    'Lighting',
+    'Rugs',
+    'Decor & Pillows',
+    'Wall Decor',
+    'Bed & Bath',
+    'Kitchen & Dining',
+  ];
+
+  const filtered = products.filter(
+    (p) => activeCategory === 'New' || p.category === activeCategory
+  );
+
+  const totalCartCount = cartItems.reduce((s, i) => s + i.qty, 0);
+
+  const handleAddToCart = (p: ShopProduct) => {
+    setCartItems((prev) => {
+      const existing = prev.find((i) => i.id === p.id);
+      if (existing) return prev.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
+      return [...prev, { ...p, qty: 1 }];
+    });
+    setAddedToast(p.name);
+    setTimeout(() => setAddedToast(null), 2500);
+  };
+
+  const handleRemoveFromCart = (id: number) => {
+    setCartItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const handleChangeQty = (id: number, delta: number) => {
+    setCartItems((prev) =>
+      prev
+        .map((i) => i.id === id ? { ...i, qty: i.qty + delta } : i)
+        .filter((i) => i.qty > 0)
+    );
+  };
+
+  const handleToggleWishlist = (id: number) => {
+    setWishlist((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="w-full min-h-screen text-stone-900 overflow-x-hidden" style={{ background: '#fff' }}>
+
+      {/* ── Hero + nav wrapper: image sits behind both ── */}
+      <div className="relative w-full" style={{ height: 'clamp(340px, 50vw, 640px)' }}>
+
+        {/* ── Background image (behind nav + text) ── */}
+        <img
+          src="/shop-hero.jpg"
+          alt="Shop hero"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        {/* Gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.40) 50%, rgba(0,0,0,0.65) 100%)',
+          }}
+        />
+
+        {/* ── Shop-specific sticky sub-header ── */}
+        <div
+          className="sticky top-[80px] z-30"
+          style={{
+            borderBottom: '1px solid rgba(255,255,255,0.22)',
+            background: 'rgba(0,0,0,0.32)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+          }}
+        >
+
+        {/* Row 1: Search | Logo | Icons */}
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10">
+          <div className="flex items-center justify-between h-[52px]">
+
+            {/* LEFT — Search */}
+            <div className="flex items-center w-1/3">
+              {searchOpen ? (
+                <div className="flex items-center gap-2 border-b border-white/60 pb-0.5 w-full max-w-[240px]">
+                  <Search size={13} className="text-white/80 shrink-0" />
+                  <input
+                    autoFocus
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search products…"
+                    className="text-[11px] tracking-wide outline-none w-full bg-transparent text-white placeholder:text-white/50"
+                  />
+                  <button
+                    onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                    className="text-white/70 hover:text-white transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors group"
+                >
+                  <Search size={14} />
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-semibold">Search</span>
+                </button>
+              )}
+            </div>
+
+            {/* CENTER — Logo */}
+            <div className="flex items-center justify-center w-1/3">
+              <button onClick={() => setCurrentPage?.('home')} className="group">
+                <img
+                  src={siteLogo}
+                  alt="Vizid"
+                  className="h-6 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+                />
+              </button>
+            </div>
+
+            {/* RIGHT — Icons */}
+            <div className="flex items-center justify-end gap-5 w-1/3">
+              <button
+                onClick={() => setCurrentPage?.('auth')}
+                title="Account"
+                aria-label="Account"
+                className="text-white hover:text-white/80 transition-colors"
+              >
+                <User size={17} strokeWidth={1.5} />
+              </button>
+
+              <button
+                title="Saved Items"
+                aria-label="Saved Items"
+                className="relative text-white hover:text-white/80 transition-colors"
+              >
+                <Heart
+                  size={17}
+                  strokeWidth={1.5}
+                  className={wishlist.size > 0 ? 'fill-white text-white' : ''}
+                />
+                {wishlist.size > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-stone-900 text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                    {wishlist.size}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsCartOpen(true)}
+                title="Cart"
+                aria-label="Cart"
+                className="relative text-white hover:text-white/80 transition-colors"
+              >
+                <ShoppingBag size={17} strokeWidth={1.5} />
+                {totalCartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-stone-900 text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                    {totalCartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Category tabs */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.18)' }}>
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
+            <div className="flex items-center overflow-x-auto scrollbar-hide">
+              {navTabs.map((tab) => {
+                const isActive = activeCategory === tab;
+                const isClearance = tab === 'Clearance';
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveCategory(tab)}
+                    className="relative shrink-0 px-4 sm:px-5 py-3.5 text-[11px] tracking-[0.1em] uppercase transition-colors duration-200 whitespace-nowrap"
+                    style={{
+                      color: isClearance && !isActive
+                        ? '#f59e0b'
+                        : isActive ? '#ffffff' : 'rgba(255,255,255,0.65)',
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    {tab}
+                    {isActive && (
+                      <span
+                        className="absolute bottom-0 left-4 right-4 block"
+                        style={{ height: '1.5px', background: '#ffffff' }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        </div>
+
+        {/* ── Hero text (sits inside the shared wrapper, below the nav) ── */}
+        <div className="absolute inset-0 flex flex-col items-center justify-end pb-14 text-center px-6 pointer-events-none">
+          <p className="text-[11px] tracking-[0.4em] uppercase text-white/75 font-medium mb-4">
+            Curated Collections
+          </p>
+          <h1
+            className="text-white leading-tight"
+            style={{
+              ...headingFont,
+              fontSize: 'clamp(2.6rem, 6vw, 5rem)',
+              letterSpacing: '-0.01em',
+              textShadow: '0 4px 28px rgba(0,0,0,0.35)',
+            }}
+          >
+            Shop Our World
+          </h1>
+        </div>
+      </div>
+
+      {/* ── Main content area ── */}
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 pt-10 pb-28">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">
+          {filtered.map((product) => (
+            <ShopCard
+              key={product.id}
+              product={product}
+              isWishlisted={wishlist.has(product.id)}
+              onToggleWishlist={handleToggleWishlist}
+              onAddToCart={handleAddToCart}
+              onClick={() => setSelectedProduct(product)}
+            />
+          ))}
+
+          {/* Coming Soon empty state */}
+          {filtered.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-32 text-center">
+              <div className="w-10 h-px bg-stone-300 mb-10 mx-auto" />
+              <p className="text-[9px] uppercase tracking-[0.35em] text-stone-400 font-semibold mb-4">
+                Coming Soon
+              </p>
+              <h2
+                style={{ ...headingFont, fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif' }}
+                className="text-3xl sm:text-4xl text-[#1a1a1a] font-light mb-4 leading-snug"
+              >
+                No Products Yet
+              </h2>
+              <p className="text-[13px] text-stone-400 font-light max-w-[280px] leading-relaxed">
+                We're curating something beautiful for this category. Check back soon.
+              </p>
+              <div className="w-10 h-px bg-stone-200 mt-10 mx-auto" />
             </div>
           )}
         </div>
       </div>
 
-      {/* SIGN IN EMAIL MODAL */}
-      {isSignInOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="bg-white max-w-md w-full p-8 sm:p-10 shadow-2xl relative border border-stone-200 text-left">
-            <button
-              onClick={() => setIsSignInOpen(false)}
-              className="absolute top-5 right-5 text-stone-400 hover:text-stone-900 transition-colors p-1"
-              aria-label="Close modal"
-            >
-              <X size={20} />
-            </button>
+      {/* ── Cart Drawer ── */}
+      <CartDrawer
+        open={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cartItems}
+        onRemove={handleRemoveFromCart}
+        onChangeQty={handleChangeQty}
+        headingFont={headingFont}
+      />
 
-            <div className="text-center mb-6">
-              <h2 style={headingFont} className="text-3xl text-stone-900 font-normal mb-2">
-                {userEmail ? 'Your Account' : 'Sign In'}
-              </h2>
-              <p className="text-xs text-stone-500 font-light">
-                {userEmail ? 'Logged in to Vizid Shop' : 'Enter your email to continue.'}
-              </p>
-            </div>
+      {/* ── Product Detail Modal ── */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+          isWishlisted={wishlist.has(selectedProduct.id)}
+          onToggleWishlist={handleToggleWishlist}
+          headingFont={headingFont}
+        />
+      )}
 
-            {userEmail ? (
-              <div className="space-y-5 text-center">
-                <div className="bg-stone-50 border border-stone-200 py-3.5 px-4 text-xs font-medium text-stone-800 tracking-wide">
-                  {userEmail}
-                </div>
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    setUserEmail(null);
-                    setEmailInput('');
-                  }}
-                  className="w-full bg-stone-900 text-white text-xs font-medium uppercase tracking-[0.2em] py-3.5 hover:bg-stone-800 transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSignIn} className="space-y-5">
-                <div>
-                  <label className="block text-[11px] font-medium uppercase tracking-wider text-stone-700 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full border border-stone-300 px-4 py-3 text-xs focus:outline-none focus:border-stone-900 transition-colors"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-stone-900 text-white text-xs font-medium uppercase tracking-[0.2em] py-3.5 hover:bg-stone-800 transition-colors"
-                >
-                  Continue
-                </button>
-
-                <div className="relative my-4 flex items-center justify-center">
-                  <div className="border-t border-stone-200 w-full"></div>
-                  <span className="bg-white px-3 text-[10px] uppercase tracking-widest text-stone-400 font-medium shrink-0 absolute">
-                    or
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  className="w-full border border-stone-300 bg-white text-stone-800 text-xs font-medium uppercase tracking-[0.15em] py-3.5 hover:bg-stone-50 transition-colors flex items-center justify-center space-x-3 shadow-xs"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  <span>Sign in with Google</span>
-                </button>
-              </form>
-            )}
-          </div>
+      {/* ── Toast ── */}
+      {addedToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] bg-[#1a1a1a] text-white px-6 py-3.5 shadow-2xl text-sm font-light flex items-center gap-3">
+          <CheckCircle size={15} className="text-stone-400" />
+          <span><em className="not-italic font-medium">{addedToast}</em> added to cart</span>
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="ml-2 text-stone-300 hover:text-white underline text-xs tracking-wide"
+          >
+            View Cart
+          </button>
         </div>
       )}
     </div>
   );
 };
+
+
+
+/* ─── AuthPage (Sign Up / Login) ─── */
+const AuthPage = ({
+  headingFont,
+  setCurrentPage,
+}: {
+  headingFont: React.CSSProperties;
+  setCurrentPage: (page: string) => void;
+}) => {
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setIsSubmitted(true);
+  };
+
+  return (
+    <div className="w-full bg-[#FAF9F7] min-h-[85vh] flex items-center justify-center py-16 px-4">
+      <div className="max-w-md w-full bg-white border border-stone-200 shadow-xl p-8 sm:p-10 relative">
+        <div className="text-center mb-8">
+          <p className="text-[10px] tracking-[0.25em] uppercase font-bold text-[#8B6F47] mb-2">
+            Vizid Luxury Living
+          </p>
+          <h1 style={headingFont} className="text-3xl sm:text-4xl text-[#2C2C2C] font-light">
+            {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-xs text-stone-500 mt-2 leading-relaxed">
+            {mode === 'signup'
+              ? 'Sign up to unlock bespoke interior design services and curated collections.'
+              : 'Sign in to access your saved items and interior design consultations.'}
+          </p>
+        </div>
+
+        {/* Tab switcher */}
+        <div className="flex border-b border-stone-200 mb-8">
+          <button
+            onClick={() => { setMode('signup'); setIsSubmitted(false); }}
+            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+              mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+            }`}
+          >
+            Sign Up
+          </button>
+          <button
+            onClick={() => { setMode('signin'); setIsSubmitted(false); }}
+            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+              mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+            }`}
+          >
+            Sign In
+          </button>
+        </div>
+
+        {isSubmitted ? (
+          <div className="text-center py-6 animate-fadeIn">
+            <div className="w-12 h-12 bg-[#8B6F47]/10 text-[#8B6F47] rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={24} />
+            </div>
+            <h3 style={headingFont} className="text-2xl text-[#2C2C2C] font-light mb-2">
+              Check Your Email
+            </h3>
+            <p className="text-xs text-stone-600 leading-relaxed mb-6">
+              We've sent a verification link to <span className="font-semibold text-stone-900">{email}</span>. Click the link in your email to complete your registration.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => setCurrentPage('shop')}
+                className="w-full bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors"
+              >
+                Continue to Shop
+              </button>
+              <button
+                onClick={() => setIsSubmitted(false)}
+                className="w-full border border-stone-300 text-stone-700 text-[11px] uppercase tracking-[0.15em] py-3 font-medium hover:bg-stone-50 transition-colors"
+              >
+                Use Different Email
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Jane Doe"
+                  className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md"
+            >
+              {mode === 'signup' ? 'Continue with Email' : 'Sign In with Email'}
+            </button>
+
+            <div className="relative flex py-3 items-center">
+              <div className="flex-grow border-t border-stone-200"></div>
+              <span className="flex-shrink mx-4 text-[9px] uppercase tracking-widest text-stone-400 font-medium">Or</span>
+              <div className="flex-grow border-t border-stone-200"></div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!email) setEmail('user@example.com');
+                setIsSubmitted(true);
+              }}
+              className="w-full border border-stone-300 bg-white text-stone-800 text-[11px] uppercase tracking-[0.15em] py-3 font-semibold hover:bg-stone-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Continue with Google
+            </button>
+          </form>
+        )}
+
+        <div className="mt-8 pt-6 border-t border-stone-200 text-center">
+          <p className="text-[11px] text-stone-500">
+            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => {
+                setMode(mode === 'signup' ? 'signin' : 'signup');
+                setIsSubmitted(false);
+              }}
+              className="text-[#8B6F47] font-semibold hover:underline uppercase tracking-wide ml-1 text-[10px]"
+            >
+              {mode === 'signup' ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) => {
   useIsomorphicLayoutEffect(() => {
@@ -1531,9 +2150,15 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
 
   const projects = [
     { title: 'The Crestview Project', location: 'Austin, TX', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200', type: 'full' },
-    { title: 'Mountainside Retreat', location: 'Park City, UT', img: 'https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=800', type: 'half' },
-    { title: 'Coastal Haven', location: 'Newport Beach, CA', img: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=800', type: 'half' },
-    { title: 'Modern Tudor', location: 'Chicago, IL', img: 'https://images.unsplash.com/photo-1600210491369-e753d80a41f3?auto=format&fit=crop&q=80&w=1200', type: 'full' }
+    { title: 'Golden Opulence Suite', location: 'Abuja, NG', img: '/portfolio/1.jpeg', type: 'full', caption: 'A regal living room draped in gold — crystal chandelier, baroque sofa sets, and floor-length satin drapes that command the room.' },
+    { title: 'Imperial Salon', location: 'Lagos, NG', img: '/portfolio/2.jpeg', type: 'half', caption: 'Symmetry meets splendour. Tufted gilt sofas and a hand-knotted area rug anchor this palatial salon in timeless elegance.' },
+    { title: 'Baroque Corner Study', location: 'Port Harcourt, NG', img: '/portfolio/3.jpeg', type: 'half', caption: 'An intimate baroque alcove featuring gold-carved accent chairs, a round pedestal table and a sculptural trio-mirror arrangement.' },
+    { title: 'Vizid Design in Motion', location: 'Lagos, NG', video: '/portfolio/video-1.mp4', isVideo: true, type: 'half', caption: 'A cinematic tour revealing the crafted details, rich textures, and architectural flow of our signature interiors.' },
+    { title: 'Artisanal Interior Sanctuary', location: 'Lagos, NG', img: '/portfolio/img-20240531.jpg', type: 'half', caption: 'Custom woodwork, bespoke architectural accents, and tailored finishes creating an elevated residential sanctuary.' },
+    { title: 'Modern Earth Lounge', location: 'Enugu, NG', img: '/portfolio/4.jpeg', type: 'full', caption: 'Warm earth tones, linen drapes and statement abstract art bring a refined, gallery-quality calm to this contemporary living space.' },
+    { title: 'Curated Elegance Living', location: 'Abuja, NG', img: '/portfolio/img-wa0030.jpg', type: 'half', caption: 'Sculptural lighting, plush modern upholstery, and bespoke artisanal finishes creating an atmosphere of quiet luxury.' },
+    { title: 'Urban Grey Retreat', location: 'Abuja, NG', img: '/portfolio/5.jpeg', type: 'half', caption: 'Sleek charcoal and stone-grey sofas pair with a sculptural layered coffee table for a living room that feels bold yet serene.' },
+    { title: 'Walnut Vanity Nook', location: 'Lagos, NG', img: '/portfolio/6.jpeg', type: 'half', caption: 'A bespoke wood-grain dressing corner — floating vanity, circular mirror and built-in shelving crafted for effortless morning rituals.' },
   ];
 
   return (
@@ -1547,35 +2172,81 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
       </div>
       <div className="max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         <div className="flex flex-col space-y-8 sm:space-y-16">
-          {projects.map((project, idx) => {
-            if (project.type === 'full') {
-              return (
-                <div key={idx} className="group cursor-pointer relative overflow-hidden w-full h-[50vh] sm:h-[70vh] lg:h-[90vh] reveal-up">
-                  <AppImage src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute bottom-0 left-0 w-full p-6 sm:p-12 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase font-bold mb-2">{project.location}</p>
-                    <h2 style={headingFont} className="text-3xl sm:text-4xl md:text-5xl">{project.title}</h2>
+          {/* Render full-width items in order, then group halves into a grid */}
+          {(() => {
+            const elements: React.ReactNode[] = [];
+            let halfBuffer: typeof projects = [];
+
+            const flushHalves = () => {
+              if (halfBuffer.length > 0) {
+                elements.push(
+                  <div key={`halves-${elements.length}`} className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16">
+                    {halfBuffer.map((project, idx) => (
+                      <div key={idx} className="group cursor-pointer flex flex-col reveal-up">
+                        <div className={`w-full ${project.isVideo ? 'aspect-[9/16]' : 'aspect-[4/5]'} overflow-hidden mb-6 relative bg-stone-100 rounded-lg`}>
+                          {project.isVideo ? (
+                            <video
+                              src={project.video}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                            />
+                          ) : (
+                            <AppImage src={project.img || ''} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                          )}
+                          <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+                        <div className="text-center md:text-left">
+                          <p className="text-[10px] tracking-[0.2em] uppercase font-bold text-stone-500 mb-2">{project.location}</p>
+                          <h2 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] mb-3">{project.title}</h2>
+                          {project.caption && (
+                            <p className="text-xs sm:text-sm text-stone-500 font-light leading-relaxed max-w-md">{project.caption}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              );
-            }
-            return null;
-          })}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16">
-            {projects.filter((p) => p.type === 'half').map((project, idx) => (
-              <div key={idx} className="group cursor-pointer flex flex-col reveal-up">
-                <div className="w-full aspect-[4/5] overflow-hidden mb-6 relative">
-                  <AppImage src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
-                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
-                <div className="text-center md:text-left">
-                  <p className="text-[10px] tracking-[0.2em] uppercase font-bold text-stone-500 mb-2">{project.location}</p>
-                  <h2 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C]">{project.title}</h2>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+                halfBuffer = [];
+              }
+            };
+
+            projects.forEach((project, idx) => {
+              if (project.type === 'full') {
+                flushHalves();
+                elements.push(
+                  <div key={idx} className="group cursor-pointer relative overflow-hidden w-full h-[50vh] sm:h-[70vh] lg:h-[90vh] reveal-up bg-stone-900">
+                    {project.isVideo ? (
+                      <video
+                        src={project.video}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                      />
+                    ) : (
+                      <AppImage src={project.img || ''} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-full p-6 sm:p-12 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 opacity-0 group-hover:opacity-100">
+                      <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase font-bold mb-2">{project.location}</p>
+                      <h2 style={headingFont} className="text-3xl sm:text-4xl md:text-5xl mb-3">{project.title}</h2>
+                      {project.caption && (
+                        <p className="text-xs sm:text-sm text-stone-300 font-light leading-relaxed max-w-2xl">{project.caption}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              } else {
+                halfBuffer.push(project);
+              }
+            });
+            flushHalves();
+            return elements;
+          })()}
         </div>
       </div>
     </div>
@@ -1599,20 +2270,20 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
     {
       name: 'Shea McGee',
       role: 'Co-Founder & Creative Director',
-      img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
+      img: '',
       bio: 'With an eye for timeless beauty and a passion for creating homes that truly reflect the people who live in them, Shea leads the creative vision of Vizid.'
     },
     {
-      name: 'Syd McGee',
-      role: 'Co-Founder & CEO',
-      img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
-      bio: 'Syd oversees business strategy, growth, and operations—ensuring that every client experience is as seamless and elevated as the spaces we create.'
+      name: 'Idika Victor',
+      role: 'Founder & CEO',
+      img: '/vizid_decors_DKFNqC9oNo0_2.jpg',
+      bio: 'Idika oversees business strategy, growth, and operations—ensuring that every client experience is as seamless and elevated as the spaces we create.'
     },
     {
-      name: 'Claire Wickström',
+      name: 'Onyekachi Wisdom',
       role: 'Principal Designer',
-      img: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600',
-      bio: 'Claire brings warmth and architectural rigor to every project, specializing in layered interiors that feel collected over a lifetime.'
+      img: '',
+      bio: 'Onyekachi brings warmth and architectural rigor to every project, specializing in layered interiors that feel collected over a lifetime.'
     }
   ];
 
@@ -1679,7 +2350,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
           <div className="relative reveal-up">
             <div className="w-full aspect-[4/5] overflow-hidden">
               <AppImage
-                src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=900"
+                src="/portfolio/7.jpeg"
                 alt="Vizid design studio interior"
                 className="w-full h-full object-cover"
               />
@@ -1701,7 +2372,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
               Beautiful Living
             </h2>
             <p className="text-sm text-stone-600 font-light leading-loose mb-6">
-              What began as a small design practice in Utah has grown into a nationally recognized studio, TV series, and home furnishings brand—all rooted in the same founding principle: design should make people happy.
+              What began as a small design practice in the university has grown into a recognized studio, and home furnishings brand—all rooted in the same founding principle: design should make people happy.
             </p>
             <p className="text-sm text-stone-600 font-light leading-loose">
               Our process is deeply collaborative. We listen before we design, and we never stop asking: does this space feel like the people who live here? That question drives everything we do.
@@ -1717,24 +2388,34 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
             <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-stone-400 mb-4">The People Behind The Work</p>
             <h2 style={headingFont} className="text-4xl sm:text-5xl text-[#2C2C2C] font-light">Meet the Team</h2>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
             {team.map((member, i) => (
-              <div key={i} className="group reveal-up">
-                <div className="w-full aspect-[3/4] overflow-hidden mb-6">
-                  <AppImage
-                    src={member.img}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
+              <div key={i} className="bg-white border border-stone-200/80 overflow-hidden shadow-sm flex flex-col reveal-up">
+                <div className="w-full aspect-[3/4] overflow-hidden bg-stone-200 flex items-center justify-center relative">
+                  {member.img ? (
+                    <AppImage
+                      src={member.img}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-stone-200/70 flex flex-col items-center justify-center text-stone-400">
+                      <User size={48} strokeWidth={1} />
+                    </div>
+                  )}
                 </div>
-                <p className="text-[9px] tracking-[0.25em] uppercase font-bold text-stone-400 mb-1">{member.role}</p>
-                <h3 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] font-normal mb-3">{member.name}</h3>
-                <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed">{member.bio}</p>
+                <div className="p-6 sm:p-8 flex flex-col flex-grow">
+                  <p className="text-[9px] tracking-[0.25em] uppercase font-bold text-[#c9a96e] mb-2">{member.role}</p>
+                  <h3 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] font-normal mb-3">{member.name}</h3>
+                  <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed">{member.bio}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
+
 
       {/* CTA strip */}
       <section className="bg-[#4A4F4C] text-white py-20 sm:py-24 px-6 text-center">
@@ -1847,7 +2528,7 @@ export default function App() {
           />
         );
       case 'shop':
-        return <ShopPage headingFont={headingFont} />;
+        return <ShopPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
       case 'portfolio':
         return <PortfolioPage headingFont={headingFont} />;
       case 'about':
@@ -1860,14 +2541,12 @@ export default function App() {
             setSelectedCategory={setSelectedReadCategory}
           />
         );
+      case 'academy':
+        return <VizidDecorAcademyPage headingFont={headingFont} setCurrentPage={setCurrentPage} adminPhoneNumber="08121819461" />;
       case 'profile':
-        return (
-          <WorkWithUsPage
-            headingFont={headingFont}
-            selectedService={selectedService}
-            setSelectedService={setSelectedService}
-          />
-        );
+      case 'auth':
+      case 'signup':
+        return <AuthPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
       case 'home':
       default:
         return <HomePage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
