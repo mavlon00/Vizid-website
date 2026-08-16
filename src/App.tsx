@@ -2022,7 +2022,9 @@ const AuthPage = ({
         }
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication error occurred.');
+      console.error('Auth error:', err);
+      const message = err?.error_description || err?.message || (typeof err === 'string' ? err : 'Authentication error occurred.');
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
