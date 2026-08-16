@@ -1224,7 +1224,7 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
 
 /* ─── Types ─── */
 interface ShopProduct {
-  id: number;
+  id: string | number;
   name: string;
   category: string;
   priceNaira: number;   // price in Naira
@@ -1255,8 +1255,8 @@ const CartDrawer = ({
   open: boolean;
   onClose: () => void;
   items: CartItem[];
-  onRemove: (id: number) => void;
-  onChangeQty: (id: number, delta: number) => void;
+  onRemove: (id: string | number) => void;
+  onChangeQty: (id: string | number, delta: number) => void;
   headingFont: React.CSSProperties;
 }) => {
   const total = items.reduce((sum, i) => sum + i.priceNaira * i.qty, 0);
@@ -1558,7 +1558,7 @@ const ShopCard = ({
 }: {
   product: ShopProduct;
   isWishlisted: boolean;
-  onToggleWishlist: (id: number) => void;
+  onToggleWishlist: (id: string | number) => void;
   onAddToCart: (p: ShopProduct) => void;
   onClick: () => void;
 }) => {
@@ -1648,14 +1648,45 @@ const ShopPage = ({
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('New');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Set<number>>(new Set());
+  const [wishlist, setWishlist] = useState<Set<string | number>>(new Set());
   const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const products: ShopProduct[] = [];
+  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setIsLoadingProducts(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          const mapped: ShopProduct[] = data.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            priceNaira: item.price ? Number(item.price) : 0,
+            img: item.image_url || fallbackImageSrc,
+            description: item.description || '',
+          }));
+          setProducts(mapped);
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   const navTabs = [
     'New',
@@ -1669,9 +1700,16 @@ const ShopPage = ({
     'Kitchen & Dining',
   ];
 
-  const filtered = products.filter(
-    (p) => activeCategory === 'New' || p.category === activeCategory
-  );
+  const filtered = products.filter((p) => {
+    const matchesCategory =
+      activeCategory === 'New' ||
+      p.category.toLowerCase().trim() === activeCategory.toLowerCase().trim();
+    const matchesSearch =
+      !searchQuery ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const totalCartCount = cartItems.reduce((s, i) => s + i.qty, 0);
 
@@ -1685,11 +1723,11 @@ const ShopPage = ({
     setTimeout(() => setAddedToast(null), 2500);
   };
 
-  const handleRemoveFromCart = (id: number) => {
+  const handleRemoveFromCart = (id: string | number) => {
     setCartItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const handleChangeQty = (id: number, delta: number) => {
+  const handleChangeQty = (id: string | number, delta: number) => {
     setCartItems((prev) =>
       prev
         .map((i) => i.id === id ? { ...i, qty: i.qty + delta } : i)
@@ -1697,7 +1735,7 @@ const ShopPage = ({
     );
   };
 
-  const handleToggleWishlist = (id: number) => {
+  const handleToggleWishlist = (id: string | number) => {
     setWishlist((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
