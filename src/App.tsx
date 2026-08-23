@@ -2320,7 +2320,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
     {
       name: 'Onyekachi Wisdom',
       role: 'Principal Designer',
-      img: '',
+      img: '/oyekachi-wisdom.jpeg',
       bio: 'Onyekachi brings warmth and architectural rigor to every project, specializing in layered interiors that feel collected over a lifetime.'
     }
   ];
