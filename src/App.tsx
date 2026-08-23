@@ -9,6 +9,7 @@ import videoC from '../7614417-hd_1920_1080_30fps.mp4';
 import siteLogo from '../vizid.png';
 import pexelsBertel from '../pexels-bertellifotografia-16985106.jpg';
 import pexelsDrew from '../pexels-drewnii19-11334182.jpg';
+import pexelsKitchen from '../pexels-perqued-9757618.jpg';
 
 import { WorkWithUsPage } from './WorkWithUsPage';
 import { ReadPage } from './ReadPage';
@@ -434,11 +435,11 @@ const Footer = ({
 
 const HorizontalGallery = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProperties; setCurrentPage: (page: string) => void; }) => {
   const portfolioProjects = [
-    { id: 1, title: 'Coastal Haven', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=1000' },
-    { id: 2, title: 'Crestview Estate', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000' },
-    { id: 3, title: 'Oxford Living', img: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=1000' },
-    { id: 4, title: 'Heritage Kitchen', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1000' },
-    { id: 5, title: 'Modern Foyer', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1000' }
+    { id: 1, title: 'Artisanal Interior Sanctuary', img: '/portfolio/img-20240531.jpg' },
+    { id: 2, title: 'Walnut Vanity Nook', img: '/portfolio/6.jpeg' },
+    { id: 3, title: 'Curated Elegance Living', img: '/portfolio/img-wa0030.jpg' },
+    { id: 4, title: 'Urban Grey Retreat', img: '/portfolio/5.jpeg' },
+    { id: 5, title: 'Imperial Salon', img: '/portfolio/2.jpeg' }
   ];
 
   return (
@@ -570,11 +571,11 @@ const CascadeGallery = ({
   targetPage = "portfolio",
   buttonText = "SEE MORE PROJECTS",
   items = [
-    { id: 1, title: 'Coastal Bath Haven', subtitle: 'NEWPORT BEACH, CA', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=1000' },
-    { id: 2, title: 'Crestview Stone Estate', subtitle: 'AUSTIN, TX', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000' },
-    { id: 3, title: 'Oxford Living Suite', subtitle: 'OXFORDSHIRE, UK', img: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=1000' },
-    { id: 4, title: 'Heritage Oak Kitchen', subtitle: 'CHICAGO, IL', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1000' },
-    { id: 5, title: 'Modern Tudor Foyer', subtitle: 'PARK CITY, UT', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1000' },
+    { id: 1, title: 'Artisanal Interior Sanctuary', subtitle: 'RESIDENTIAL SANCTUARY', img: '/portfolio/img-20240531.jpg' },
+    { id: 2, title: 'Walnut Vanity Nook', subtitle: 'BESPOKE DRESSING', img: '/portfolio/6.jpeg' },
+    { id: 3, title: 'Curated Elegance Living', subtitle: 'QUIET LUXURY', img: '/portfolio/img-wa0030.jpg' },
+    { id: 4, title: 'Urban Grey Retreat', subtitle: 'SERENE LIVING', img: '/portfolio/5.jpeg' },
+    { id: 5, title: 'Imperial Salon', subtitle: 'PALATIAL ELEGANCE', img: '/portfolio/2.jpeg' },
   ]
 }: {
   headingFont: React.CSSProperties;
@@ -743,23 +744,23 @@ const CascadeReadSection = ({ headingFont, setCurrentPage }: { headingFont: Reac
   const articles = [
     {
       id: 1,
-      title: 'Strawberries & Cream Summer Cake',
-      subtitle: 'A taste of summer nostalgia & outdoor dining styling.',
+      title: 'Gourmet Tropical Celebration',
+      subtitle: 'Refined outdoor dining tablescape & dessert styling.',
       category: 'AROUND THE TABLE',
       date: 'JULY 18, 2026',
       readTime: '5 MIN READ',
-      quote: '“Summer weekends are defined by light berry desserts on the patio paired with washed linens and fresh garden stems.”',
+      quote: '“Weekend gatherings are defined by vibrant hospitality on the patio paired with linen napkins and fresh foliage.”',
       img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=1200'
     },
     {
       id: 2,
-      title: 'Oxford Road Project: Episode 6',
-      subtitle: 'Final Walkthrough & 3D Spatial Visuals with Shea McGee',
+      title: 'Afro-Minimalist Culinary Spaces',
+      subtitle: 'Warm Fluted Teak Joinery, Dark Marble & Inverter-Smart Lighting',
       category: 'DESIGN',
-      date: 'JULY 15, 2026',
-      readTime: '6 MIN READ',
-      quote: '“Using virtual 3D rendering allowed us to perfect spatial clearance around key furniture pieces before breaking ground.”',
-      img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1200'
+      date: 'AUGUST 04, 2026',
+      readTime: '8 MIN READ',
+      quote: '“A luxury kitchen must honor both culture and function, combining warm fluted teak with golden LED illumination.”',
+      img: pexelsKitchen
     },
     {
       id: 3,
@@ -768,13 +769,13 @@ const CascadeReadSection = ({ headingFont, setCurrentPage }: { headingFont: Reac
       category: 'HOW-TO',
       date: 'JULY 2, 2026',
       readTime: '7 MIN READ',
-      quote: '“Layering textures—from bouclé to aged oak—creates living spaces that feel collected over a lifetime.”',
+      quote: '“Layering textures—from bouclé to aged timber—creates living spaces that feel collected over a lifetime.”',
       img: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&q=80&w=1200'
     },
     {
       id: 4,
       title: 'Mixing Wood Tones & Textures',
-      subtitle: 'Harmonizing oak, walnut, and antique pine in modern spatial layouts.',
+      subtitle: 'Harmonizing teak, walnut, and mahogany in modern spatial layouts.',
       category: 'DESIGN TIPS',
       date: 'JUNE 25, 2026',
       readTime: '4 MIN READ',
@@ -971,33 +972,33 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
 
   const quotes = [
     {
-      quote: '“Studio McGee has become synonymous with a certain aspirational, attainable American home aesthetic—warm, layered, and endlessly photographable.”',
-      source: 'The New York Times'
+      quote: '“VIZID has become synonymous with elevated Afro-Minimalist luxury—warm, layered, and timelessly sophisticated.”',
+      source: 'Architectural Editorial'
     },
     {
-      quote: '“Shea McGee has redefined modern traditionalism, blending elevated craftsmanship with effortless everyday comfort.”',
-      source: 'Architectural Digest'
+      quote: '“VIZID has redefined contemporary interior architecture, blending indigenous timber craftsmanship with modern 3D spatial planning.”',
+      source: 'Design Digest'
     },
     {
-      quote: '“The ultimate go-to design house for creating serene, timeless, and deeply personal living spaces.”',
-      source: 'Vogue'
+      quote: '“The premier design house for creating serene, opulent, and deeply authentic living sanctuaries.”',
+      source: 'Luxury Living'
     }
   ];
 
   const readArticles = [
     {
-      title: 'Strawberries & Cream Cake',
-      subtitle: 'A taste of summer nostalgia.',
+      title: 'Tropical Coconut Cake',
+      subtitle: 'Refined celebration & hospitality.',
       category: 'AROUND THE TABLE',
       date: 'JULY 18, 2026',
       img: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=800'
     },
     {
-      title: 'Oxford Road: Episode 6',
-      subtitle: 'Final Walkthrough with Shea',
+      title: 'Afro-Minimalist Kitchen',
+      subtitle: 'Modern Fluted Teak & Dark Marble',
       category: 'DESIGN',
-      date: 'JULY 15, 2026',
-      img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=800'
+      date: 'AUGUST 04, 2026',
+      img: pexelsKitchen
     },
     {
       title: 'The Art of Layering',
@@ -1087,8 +1088,8 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
         targetPage="read"
         buttonText="SEE MORE ARTICLES"
         items={[
-          { id: 1, title: 'Strawberries & Cream Cake', subtitle: 'AROUND THE TABLE · JULY 18, 2026', img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1200' },
-          { id: 2, title: 'Oxford Road: Episode 6', subtitle: 'DESIGN · JULY 15, 2026', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1200' },
+          { id: 1, title: 'Tropical Celebration Cake', subtitle: 'AROUND THE TABLE · JULY 18, 2026', img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1200' },
+          { id: 2, title: 'Afro-Minimalist Culinary Spaces', subtitle: 'DESIGN · AUGUST 2026', img: pexelsKitchen },
           { id: 3, title: 'The Art of Layering Interiors', subtitle: 'HOW-TO · JULY 2, 2026', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200' },
           { id: 4, title: 'Mixing Wood Tones & Textures', subtitle: 'DESIGN TIPS · JUNE 25, 2026', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=1200' },
           { id: 5, title: 'Serene Morning Sanctuary', subtitle: 'LIFESTYLE · JUNE 18, 2026', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=1200' },
@@ -1123,7 +1124,7 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
               A design house rooted in tradition.
             </p>
             <p className="text-xs sm:text-sm leading-relaxed font-light text-[#D8C8B8] mb-10 max-w-xl">
-              For interior designer Shea McGee, design has always been about how a space makes you feel—not just how it looks. Since 2014, that philosophy has shaped Studio McGee and continues to guide every project today. Our New Heritage aesthetic is rooted in classic design principles and traditional craftsmanship, adapted through a modern lens—creating homes that feel collected, comfortable, and effortlessly timeless.
+              At VIZID, design has always been about how a space makes you feel—not just how it looks. Guided by timeless craftsmanship and modern architectural innovation, our Afro-Minimalist aesthetic blends rich indigenous hardwoods, organic stone, and warm ambient light—creating homes that feel deeply authentic, comforting, and effortlessly regal.
             </p>
             <button
               onClick={() => setCurrentPage('read')}
@@ -2188,16 +2189,16 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
   }, []);
 
   const projects = [
-    { title: 'The Crestview Project', location: 'Austin, TX', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200', type: 'full' },
-    { title: 'Golden Opulence Suite', location: 'Abuja, NG', img: '/portfolio/1.jpeg', type: 'full', caption: 'A regal living room draped in gold — crystal chandelier, baroque sofa sets, and floor-length satin drapes that command the room.' },
-    { title: 'Imperial Salon', location: 'Lagos, NG', img: '/portfolio/2.jpeg', type: 'half', caption: 'Symmetry meets splendour. Tufted gilt sofas and a hand-knotted area rug anchor this palatial salon in timeless elegance.' },
-    { title: 'Baroque Corner Study', location: 'Port Harcourt, NG', img: '/portfolio/3.jpeg', type: 'half', caption: 'An intimate baroque alcove featuring gold-carved accent chairs, a round pedestal table and a sculptural trio-mirror arrangement.' },
-    { title: 'Vizid Design in Motion', location: 'Lagos, NG', video: '/portfolio/video-1.mp4', isVideo: true, type: 'half', caption: 'A cinematic tour revealing the crafted details, rich textures, and architectural flow of our signature interiors.' },
-    { title: 'Artisanal Interior Sanctuary', location: 'Lagos, NG', img: '/portfolio/img-20240531.jpg', type: 'half', caption: 'Custom woodwork, bespoke architectural accents, and tailored finishes creating an elevated residential sanctuary.' },
-    { title: 'Modern Earth Lounge', location: 'Enugu, NG', img: '/portfolio/4.jpeg', type: 'full', caption: 'Warm earth tones, linen drapes and statement abstract art bring a refined, gallery-quality calm to this contemporary living space.' },
-    { title: 'Curated Elegance Living', location: 'Abuja, NG', img: '/portfolio/img-wa0030.jpg', type: 'half', caption: 'Sculptural lighting, plush modern upholstery, and bespoke artisanal finishes creating an atmosphere of quiet luxury.' },
-    { title: 'Urban Grey Retreat', location: 'Abuja, NG', img: '/portfolio/5.jpeg', type: 'half', caption: 'Sleek charcoal and stone-grey sofas pair with a sculptural layered coffee table for a living room that feels bold yet serene.' },
-    { title: 'Walnut Vanity Nook', location: 'Lagos, NG', img: '/portfolio/6.jpeg', type: 'half', caption: 'A bespoke wood-grain dressing corner — floating vanity, circular mirror and built-in shelving crafted for effortless morning rituals.' },
+    { title: 'Crestview Residence', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200', type: 'full' },
+    { title: 'Golden Opulence Suite', img: '/portfolio/1.jpeg', type: 'full', caption: 'A regal living room draped in gold — crystal chandelier, baroque sofa sets, and floor-length satin drapes that command the room.' },
+    { title: 'Imperial Salon', img: '/portfolio/2.jpeg', type: 'half', caption: 'Symmetry meets splendour. Tufted gilt sofas and a hand-knotted area rug anchor this palatial salon in timeless elegance.' },
+    { title: 'Baroque Corner Study', img: '/portfolio/3.jpeg', type: 'half', caption: 'An intimate baroque alcove featuring gold-carved accent chairs, a round pedestal table and a sculptural trio-mirror arrangement.' },
+    { title: 'Vizid Design in Motion', video: '/portfolio/video-1.mp4', isVideo: true, type: 'half', caption: 'A cinematic tour revealing the crafted details, rich textures, and architectural flow of our signature interiors.' },
+    { title: 'Artisanal Interior Sanctuary', img: '/portfolio/img-20240531.jpg', type: 'half', caption: 'Custom woodwork, bespoke architectural accents, and tailored finishes creating an elevated residential sanctuary.' },
+    { title: 'Modern Earth Lounge', img: '/portfolio/4.jpeg', type: 'full', caption: 'Warm earth tones, linen drapes and statement abstract art bring a refined, gallery-quality calm to this contemporary living space.' },
+    { title: 'Curated Elegance Living', img: '/portfolio/img-wa0030.jpg', type: 'half', caption: 'Sculptural lighting, plush modern upholstery, and bespoke artisanal finishes creating an atmosphere of quiet luxury.' },
+    { title: 'Urban Grey Retreat', img: '/portfolio/5.jpeg', type: 'half', caption: 'Sleek charcoal and stone-grey sofas pair with a sculptural layered coffee table for a living room that feels bold yet serene.' },
+    { title: 'Walnut Vanity Nook', img: '/portfolio/6.jpeg', type: 'half', caption: 'A bespoke wood-grain dressing corner — floating vanity, circular mirror and built-in shelving crafted for effortless morning rituals.' },
   ];
 
   return (
@@ -2238,7 +2239,6 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
                           <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </div>
                         <div className="text-center md:text-left">
-                          <p className="text-[10px] tracking-[0.2em] uppercase font-bold text-stone-500 mb-2">{project.location}</p>
                           <h2 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] mb-3">{project.title}</h2>
                           {project.caption && (
                             <p className="text-xs sm:text-sm text-stone-500 font-light leading-relaxed max-w-md">{project.caption}</p>
@@ -2271,7 +2271,6 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div className="absolute bottom-0 left-0 w-full p-6 sm:p-12 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 opacity-0 group-hover:opacity-100">
-                      <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase font-bold mb-2">{project.location}</p>
                       <h2 style={headingFont} className="text-3xl sm:text-4xl md:text-5xl mb-3">{project.title}</h2>
                       {project.caption && (
                         <p className="text-xs sm:text-sm text-stone-300 font-light leading-relaxed max-w-2xl">{project.caption}</p>
@@ -2307,10 +2306,10 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
 
   const team = [
     {
-      name: 'Shea McGee',
-      role: 'Co-Founder & Creative Director',
+      name: 'Amina Bello',
+      role: 'Head of Architectural Spatial Design',
       img: '',
-      bio: 'With an eye for timeless beauty and a passion for creating homes that truly reflect the people who live in them, Shea leads the creative vision of Vizid.'
+      bio: 'With an eye for timeless modern heritage and a passion for creating spaces that honor light, timber, and spatial flow, Amina leads the architectural vision of Vizid.'
     },
     {
       name: 'Idika Victor',
