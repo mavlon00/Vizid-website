@@ -2308,7 +2308,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
     {
       name: 'Asian Dickson',
       role: 'Akwa -ibom manager',
-      img: '',
+      img: '/asian-dickson.jpeg',
       bio: 'With an eye for timeless modern heritage and a passion for creating spaces that honor light, timber, and spatial flow, Amina leads the architectural vision of Vizid.'
     },
     {
@@ -2320,7 +2320,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
     {
       name: 'Onyekachi Wisdom',
       role: 'Abia state maneger',
-      img: '/oyekachi-wisdom.jpeg',
+      img: '/IMG_7608.JPG.jpeg',
       bio: 'Onyekachi brings warmth and architectural rigor to every project, specializing in layered interiors that feel collected over a lifetime.'
     }
   ];
