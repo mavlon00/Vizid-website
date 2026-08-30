@@ -2309,7 +2309,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
       name: 'Asian Dickson',
       role: 'Akwa -ibom manager',
       img: '/asian-dickson.jpeg',
-      bio: 'With an eye for timeless modern heritage and a passion for creating spaces that honor light, timber, and spatial flow, Amina leads the architectural vision of Vizid.'
+      bio: 'Asian plays a key role in driving the brand’s operations and growth across the state. With a strong passion for design, excellence, and client satisfaction, Asian ensures that every project reflects VIZID Decors’ commitment to creating sophisticated, functional, and timeless spaces.'
     },
     {
       name: 'Idika Victor',
