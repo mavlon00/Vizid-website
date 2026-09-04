@@ -225,8 +225,9 @@ const Footer = ({
   const [emailInput, setEmailInput] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = emailInput.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
@@ -234,7 +235,28 @@ const Footer = ({
       return;
     }
     setEmailError('');
-    setNewsletterSubscribed(true);
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert([{ email: trimmed }]);
+
+      if (error) {
+        if (error.code === '23505') {
+          setNewsletterSubscribed(true);
+          return;
+        }
+        throw error;
+      }
+
+      setNewsletterSubscribed(true);
+    } catch (err: any) {
+      console.error('Newsletter signup error:', err);
+      setEmailError(err?.message || 'Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -1996,18 +2018,22 @@ const ShopPage = ({
 
 
 
-/* ─── AuthPage (Sign Up / Login) ─── */
+/* ─── AuthPage (Sign Up / Login with Email Code Verification) ─── */
 const AuthPage = ({
   headingFont,
   setCurrentPage,
+  targetPage = 'shop',
 }: {
   headingFont: React.CSSProperties;
   setCurrentPage: (page: string) => void;
+  targetPage?: string;
 }) => {
   const [mode, setMode] = useState<'signup' | 'signin'>('signin');
+  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -2037,7 +2063,7 @@ const AuthPage = ({
           if (profile?.role === 'admin') {
             setCurrentPage('admin');
           } else {
-            setCurrentPage('home');
+            setCurrentPage(targetPage);
           }
         }
       } else {
@@ -2054,16 +2080,66 @@ const AuthPage = ({
         if (error) throw error;
 
         if (data.session) {
-          setSuccessMsg('Account created successfully! Welcome to Vizid.');
-          setTimeout(() => setCurrentPage('home'), 1500);
+          setCurrentPage(targetPage);
         } else {
-          setSuccessMsg('Account created! Please check your email to verify your account.');
+          setStep('otp');
+          setSuccessMsg('A 6-digit verification code has been sent to your email.');
         }
       }
     } catch (err: any) {
       console.error('Auth error:', err);
       const message = err?.error_description || err?.message || (typeof err === 'string' ? err : 'Authentication error occurred.');
       setErrorMsg(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpCode.trim(),
+        type: 'signup',
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        setSuccessMsg('Email verified successfully! Redirecting...');
+        setTimeout(() => setCurrentPage(targetPage), 800);
+      } else {
+        setSuccessMsg('Verification successful. Please log in with your credentials.');
+        setMode('signin');
+        setStep('credentials');
+      }
+    } catch (err: any) {
+      console.error('OTP Verification error:', err);
+      const message = err?.error_description || err?.message || 'Invalid or expired verification code. Please check and try again.';
+      setErrorMsg(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+      });
+      if (error) throw error;
+      setSuccessMsg('A new 6-digit verification code has been sent to your email.');
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to resend verification code.');
     } finally {
       setIsLoading(false);
     }
@@ -2077,34 +2153,38 @@ const AuthPage = ({
             Vizid Luxury Living
           </p>
           <h1 style={headingFont} className="text-3xl sm:text-4xl text-[#2C2C2C] font-light">
-            {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
+            {step === 'otp' ? 'Verify Email' : (mode === 'signup' ? 'Create Account' : 'Welcome Back')}
           </h1>
           <p className="text-xs text-stone-500 mt-2 leading-relaxed">
-            {mode === 'signup'
-              ? 'Sign up to unlock bespoke interior design services and curated collections.'
-              : 'Sign in to access your saved items and interior design consultations.'}
+            {step === 'otp'
+              ? `Enter the 6-digit verification code sent to ${email}`
+              : (mode === 'signup'
+                ? 'Sign up to access the Vizid Shop and custom collections.'
+                : 'Sign in to access your account and browse the Vizid Shop.')}
           </p>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-stone-200 mb-8">
-          <button
-            onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-              mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-              mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
+        {step === 'credentials' && (
+          <div className="flex border-b border-stone-200 mb-8">
+            <button
+              onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+                mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+                mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
 
         {errorMsg && (
           <div className="mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded text-center">
@@ -2118,59 +2198,104 @@ const AuthPage = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
+        {step === 'otp' ? (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
               <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
-                Full Name
+                6-Digit Verification Code
               </label>
               <input
                 type="text"
                 required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Jane Doe"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-center text-lg tracking-[0.3em] font-mono text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || otpCode.length !== 6}
+              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60"
+            >
+              {isLoading ? 'Verifying...' : 'Verify Code & Enter Shop'}
+            </button>
+
+            <div className="flex items-center justify-between text-xs pt-2">
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isLoading}
+                className="text-[#8B6F47] hover:underline font-medium"
+              >
+                Resend Code
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStep('credentials'); setErrorMsg(null); setSuccessMsg(null); }}
+                className="text-stone-500 hover:text-stone-800"
+              >
+                Back to Sign Up
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Jane Doe"
+                  className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
-            />
-          </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+              />
+            </div>
 
-          <div>
-            <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60"
-          >
-            {isLoading ? 'Processing...' : (mode === 'signup' ? 'Create Account' : 'Sign In')}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60"
+            >
+              {isLoading ? 'Processing...' : (mode === 'signup' ? 'Create Account' : 'Sign In')}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -2314,8 +2439,13 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
     {
       name: 'Idika Victor',
       role: 'Founder & CEO',
-      img: '/vizid_decors_DKFNqC9oNo0_2.jpg',
-      bio: 'Idika oversees business strategy, growth, and operations—ensuring that every client experience is as seamless and elevated as the spaces we create.'
+      img: '/IMG_8453.JPG',
+      bio: `Idika Victor is a professional interior designer, educator, and entrepreneur. He is the founder of Vizid Decors Ltd., a design firm specializing in high-end modern and luxury spatial design.
+Beyond his commercial practice, he serves as the Lead Instructor for the Vizid Design Academy, an educational institution dedicated to training the next generation of spatial designers.
+
+Victor holds a background in Food Science and Technology. This scientific training deeply informs his structured approach to design physics, material properties, and spatial optimization.
+
+He is the Convener of "Self Discovery with Idika Victor" and co-author of A Marriage on a Mission, written alongside his wife, Princess Adanna. Victor seamlessly integrates his professional pursuits with his commitment to family and community impact.`
     },
     {
       name: 'Onyekachi Wisdom',
@@ -2446,7 +2576,7 @@ const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProp
                 <div className="p-6 sm:p-8 flex flex-col flex-grow">
                   <p className="text-[9px] tracking-[0.25em] uppercase font-bold text-[#c9a96e] mb-2">{member.role}</p>
                   <h3 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] font-normal mb-3">{member.name}</h3>
-                  <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed">{member.bio}</p>
+                  <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed whitespace-pre-line">{member.bio}</p>
                 </div>
               </div>
             ))}
@@ -2477,7 +2607,22 @@ export default function App() {
   const [selectedService, setSelectedService] = useState<'virtual' | 'full'>('virtual');
   const [selectedReadCategory, setSelectedReadCategory] = useState<string>('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
   const lenisRef = useRef<Lenis | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const lenis = new Lenis({
@@ -2527,6 +2672,9 @@ export default function App() {
           />
         );
       case 'shop':
+        if (!session) {
+          return <AuthPage headingFont={headingFont} setCurrentPage={setCurrentPage} targetPage="shop" />;
+        }
         return <ShopPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
       case 'portfolio':
         return <PortfolioPage headingFont={headingFont} />;
