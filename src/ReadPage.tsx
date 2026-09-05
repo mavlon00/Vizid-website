@@ -231,7 +231,10 @@ export const ReadPage: React.FC<ReadPageProps> = ({
       date: 'JUNE 28, 2026',
       readTime: '4 MIN READ',
       author: 'VIZID',
-      img: 'https://images.unsplash.com/photo-1556910103-1c02745a828d?auto=format&fit=crop&q=80&w=1200',
+      img: '/kitchen_open_shelving.png',
+      galleryImgs: [
+        '/kitchen_open_shelving.png',
+      ],
       writeup:
         'Open shelves are a beautiful showcase for handcrafted ceramic dishware, glassware, and artisanal wooden vessels. Here is our step-by-step formula for styling open shelving without cluttering your kitchen space.',
       sections: [
@@ -581,6 +584,26 @@ export const ReadPage: React.FC<ReadPageProps> = ({
                   </p>
                 </div>
               ))}
+
+              {/* Gallery / Detail Visuals */}
+              {modalArticle.galleryImgs && modalArticle.galleryImgs.length > 0 && (
+                <div className="pt-6">
+                  <h4 className="text-xs uppercase tracking-widest font-bold text-stone-500 mb-4">
+                    Visual Detail & Gallery
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {modalArticle.galleryImgs.map((gImg, gIdx) => (
+                      <div key={gIdx} className="w-full aspect-[4/3] overflow-hidden bg-stone-100 border border-stone-200 shadow-sm">
+                        <img
+                          src={gImg}
+                          alt={`${modalArticle.title} detail ${gIdx + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quote Block if present */}
               {modalArticle.quote && (

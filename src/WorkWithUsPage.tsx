@@ -52,6 +52,18 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
     e.preventDefault();
     setFormSubmitted(true);
 
+    const formDataObj = new FormData(e.currentTarget);
+    try {
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formDataObj as any).toString(),
+      });
+    } catch (err) {
+      console.error("Form backup submission failed:", err);
+      // do not block the WhatsApp flow on this failing
+    }
+
     const cleanPhone = formatWhatsAppNumber(adminPhoneNumber);
     const whatsappMessage = `🏡 *NEW VIZID STUDIO INQUIRY*\n\n📌 *Service Request:* ${formData.serviceType}\n📍 *Location:* ${formData.city}${formData.state ? `, ${formData.state}` : ''}\n📐 *Home Size:* ${formData.sqft || 'N/A'}\n\n⏱ *Timeline:*\n• *Start Time:* ${formData.start || 'N/A'}\n• *Target Completion:* ${formData.completion || 'N/A'}\n\n✨ *Inspiration & Vision:*\n• *Project Style:* ${formData.portfolio || 'N/A'}\n• *Pinterest Link:* ${formData.pinterest || 'N/A'}\n\n💬 *Reason / Vision:*\n${formData.reason || 'None provided'}`;
 

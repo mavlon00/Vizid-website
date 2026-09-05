@@ -21,4 +21,14 @@ export interface Product {
   created_at: string;
 }
 
+if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
+  throw new Error(
+    `Supabase URL is missing or invalid at build time. ` +
+    `Received: "${supabaseUrl}". Check environment variables on this deployment.`
+  );
+}
+if (!supabaseAnonKey) {
+  throw new Error('Supabase anon key is missing at build time.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

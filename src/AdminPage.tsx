@@ -13,6 +13,9 @@ import {
   Layers,
   ShoppingBag,
   Info,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface AdminPageProps {
@@ -28,6 +31,18 @@ export interface ProductItem {
   description: string | null;
   image_url: string | null;
   created_at?: string;
+}
+
+export interface OrderRow {
+  id: string;
+  user_id: string;
+  items: any[];
+  total_amount: number;
+  delivery_address: string;
+  phone_number: string;
+  status: 'pending' | 'paid' | 'failed' | 'cancelled';
+  paystack_reference: string | null;
+  created_at: string;
 }
 
 const CATEGORIES = [
@@ -57,9 +72,15 @@ const formatNaira = (amount: number | null) => {
 
 export const AdminPage: React.FC<AdminPageProps> = ({ headingFont, setCurrentPage }) => {
   const [status, setStatus] = useState<'checking' | 'authorized' | 'denied'>('checking');
+  const [adminView, setAdminView] = useState<'products' | 'orders'>('products');
   const [activeCategory, setActiveCategory] = useState<string>('Furniture');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  // Orders state
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -148,9 +169,31 @@ export const AdminPage: React.FC<AdminPageProps> = ({ headingFont, setCurrentPag
     }
   };
 
+  // Fetch orders (admin only — RLS policy allows this)
+  const fetchOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setOrders(data as OrderRow[]);
+      } else if (error) {
+        console.error('Error fetching orders:', error);
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
     if (status === 'authorized') {
       fetchProducts();
+      fetchOrders();
     }
   }, [status]);
 
@@ -389,122 +432,276 @@ export const AdminPage: React.FC<AdminPageProps> = ({ headingFont, setCurrentPag
         {/* Main Grid: Sidebar + Product Catalog */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-          {/* Left Sidebar: Categories */}
+          {/* Left Sidebar: Nav */}
           <div className="lg:col-span-1 bg-white border border-stone-200 p-6 self-start">
-            <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-stone-500 mb-4 pb-3 border-b border-stone-100 flex items-center gap-2">
-              <Layers size={14} /> Categories
-            </h2>
-            <div className="space-y-1.5">
-              {CATEGORIES.map((cat) => {
-                const isActive = activeCategory === cat;
-                const count = products.filter(
-                  (p) => cat === 'New' || p.category.toLowerCase().trim() === cat.toLowerCase().trim()
-                ).length;
 
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`w-full flex items-center justify-between px-4 py-3 text-xs uppercase tracking-[0.1em] font-medium transition-all ${
-                      isActive
-                        ? 'bg-stone-900 text-white shadow-sm font-semibold'
-                        : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
-                    }`}
-                  >
-                    <span>{cat}</span>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
+            {/* View Switcher */}
+            <div className="mb-6">
+              <button
+                onClick={() => setAdminView('products')}
+                className={`w-full flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-medium mb-1.5 transition-all ${
+                  adminView === 'products'
+                    ? 'bg-stone-900 text-white font-semibold'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+              >
+                <Layers size={14} /> Products
+              </button>
+              <button
+                onClick={() => setAdminView('orders')}
+                className={`w-full flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-medium transition-all ${
+                  adminView === 'orders'
+                    ? 'bg-stone-900 text-white font-semibold'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+              >
+                <ClipboardList size={14} /> Orders
+                {orders.filter(o => o.status === 'pending' || o.status === 'paid').length > 0 && (
+                  <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${
+                    adminView === 'orders' ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
+                  }`}>
+                    {orders.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Categories — only shown in products view */}
+            {adminView === 'products' && (
+              <>
+                <h2 className="text-[11px] uppercase tracking-[0.2em] font-bold text-stone-500 mb-4 pb-3 border-b border-stone-100 flex items-center gap-2">
+                  <Layers size={14} /> Categories
+                </h2>
+                <div className="space-y-1.5">
+                            {CATEGORIES.map((cat) => {
+                  const isActive = activeCategory === cat;
+                  const count = products.filter(
+                    (p) => cat === 'New' || p.category.toLowerCase().trim() === cat.toLowerCase().trim()
+                  ).length;
+
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-xs uppercase tracking-[0.1em] font-medium transition-all ${
+                        isActive
+                          ? 'bg-stone-900 text-white shadow-sm font-semibold'
+                          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                       }`}
                     >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span>{cat}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              </>
+            )}
           </div>
 
-          {/* Main Area: Product Grid */}
+          {/* Main Area: Products or Orders */}
           <div className="lg:col-span-3">
-            <div className="flex justify-between items-center mb-6">
-              <h2 style={headingFont} className="text-2xl text-[#2C2C2C]">
-                {activeCategory} Products ({filteredProducts.length})
-              </h2>
-            </div>
 
-            {isLoadingProducts ? (
-              <div className="flex justify-center items-center py-24 bg-white border border-stone-200">
-                <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="bg-white border border-stone-200 p-12 text-center">
-                <Package className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-                <h3 style={headingFont} className="text-xl text-stone-700 mb-2">
-                  No Products in {activeCategory}
-                </h3>
-                <p className="text-xs text-stone-500 mb-6">
-                  Get started by adding products to this category.
-                </p>
-                <button
-                  onClick={() => handleOpenAddModal(activeCategory)}
-                  className="bg-[#2C2C2C] text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.18em] font-semibold hover:bg-stone-900 transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus size={14} /> Add Product
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="bg-white border border-stone-200 flex flex-col group hover:shadow-md transition-shadow"
+            {/* ── ORDERS VIEW ── */}
+            {adminView === 'orders' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 style={headingFont} className="text-2xl text-[#2C2C2C]">
+                    Orders ({orders.length})
+                  </h2>
+                  <button
+                    onClick={fetchOrders}
+                    className="text-[10px] uppercase tracking-wider font-semibold text-stone-500 hover:text-stone-900 border border-stone-200 px-4 py-2 hover:bg-stone-50 transition-colors"
                   >
-                    {/* Thumbnail */}
-                    <div className="relative aspect-square w-full bg-stone-100 overflow-hidden">
-                      <img
-                        src={product.image_url || ''}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] uppercase tracking-wider font-semibold text-stone-800">
-                        {product.category}
-                      </span>
-                    </div>
+                    Refresh
+                  </button>
+                </div>
 
-                    {/* Content */}
-                    <div className="p-5 flex flex-col flex-grow">
-                      <h3 style={headingFont} className="text-lg text-stone-900 font-normal mb-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-sm font-semibold text-stone-800 mb-2">
-                        {formatNaira(product.price)}
-                      </p>
-                      {product.description && (
-                        <p className="text-xs text-stone-500 font-light line-clamp-2 leading-relaxed mb-4">
-                          {product.description}
-                        </p>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="mt-auto pt-4 border-t border-stone-100 flex items-center justify-between gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(product)}
-                          className="flex-1 border border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white py-2 text-[10px] uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
-                        >
-                          <Edit2 size={12} /> Edit
-                        </button>
-                        <button
-                          onClick={() => setDeletingProduct(product)}
-                          className="border border-rose-200 text-rose-700 hover:bg-rose-600 hover:text-white px-3 py-2 text-[10px] uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
-                          title="Delete Product"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
+                {isLoadingOrders ? (
+                  <div className="flex justify-center items-center py-24 bg-white border border-stone-200">
+                    <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
                   </div>
-                ))}
+                ) : orders.length === 0 ? (
+                  <div className="bg-white border border-stone-200 p-12 text-center">
+                    <ClipboardList className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                    <h3 style={headingFont} className="text-xl text-stone-700 mb-2">No Orders Yet</h3>
+                    <p className="text-xs text-stone-500">Orders will appear here once customers complete checkout.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {orders.map((order) => {
+                      const isExpanded = expandedOrderId === order.id;
+                      const itemCount = Array.isArray(order.items) ? order.items.length : 0;
+                      const statusColors: Record<string, string> = {
+                        pending: 'bg-amber-50 text-amber-700 border-amber-200',
+                        paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        failed: 'bg-rose-50 text-rose-700 border-rose-200',
+                        cancelled: 'bg-stone-100 text-stone-600 border-stone-200',
+                      };
+                      return (
+                        <div key={order.id} className="bg-white border border-stone-200 overflow-hidden">
+                          {/* Row header */}
+                          <div className="grid grid-cols-[1fr_auto] gap-4 px-5 py-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm min-w-0">
+                              {/* ID + Date */}
+                              <div>
+                                <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-0.5">Order ID</p>
+                                <p className="font-mono text-[11px] text-stone-700">{order.id.slice(0, 8).toUpperCase()}…</p>
+                                <p className="text-[10px] text-stone-400 mt-0.5">
+                                  {new Date(order.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                              </div>
+                              {/* Total + Items */}
+                              <div>
+                                <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-0.5">Total</p>
+                                <p className="font-semibold text-stone-800">₦{Number(order.total_amount).toLocaleString('en-NG')}</p>
+                                <p className="text-[10px] text-stone-400">{itemCount} item{itemCount !== 1 ? 's' : ''}</p>
+                              </div>
+                              {/* Status */}
+                              <div>
+                                <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-1">Status</p>
+                                <span className={`inline-block text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 border ${statusColors[order.status] || statusColors.pending}`}>
+                                  {order.status}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Expand toggle */}
+                            <button
+                              onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                              className="self-start p-1.5 text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors"
+                              title={isExpanded ? 'Collapse' : 'View details'}
+                            >
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                          </div>
+
+                          {/* Expanded detail panel */}
+                          {isExpanded && (
+                            <div className="border-t border-stone-100 bg-[#FAFAF9] px-5 py-4 space-y-4">
+                              {/* Delivery info */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-1">Delivery Address</p>
+                                  <p className="text-sm text-stone-700 leading-snug whitespace-pre-wrap">{order.delivery_address}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-1">Phone Number</p>
+                                  <p className="text-sm text-stone-700">{order.phone_number}</p>
+                                  <p className="text-[10px] text-stone-400 mt-1 font-mono">Ref: {order.paystack_reference || '—'}</p>
+                                </div>
+                              </div>
+
+                              {/* Items list */}
+                              <div>
+                                <p className="text-[9px] uppercase tracking-[0.15em] font-bold text-stone-400 mb-2">Items Ordered</p>
+                                <div className="space-y-1.5">
+                                  {Array.isArray(order.items) && order.items.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between text-xs text-stone-700 bg-white border border-stone-100 px-3 py-2">
+                                      <span className="font-medium">{item.name}</span>
+                                      <span className="text-stone-500 ml-4">Qty {item.qty} &times; ₦{Number(item.price).toLocaleString('en-NG')}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── PRODUCTS VIEW ── */}
+            {adminView === 'products' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 style={headingFont} className="text-2xl text-[#2C2C2C]">
+                    {activeCategory} Products ({filteredProducts.length})
+                  </h2>
+                </div>
+
+                {isLoadingProducts ? (
+                  <div className="flex justify-center items-center py-24 bg-white border border-stone-200">
+                    <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="bg-white border border-stone-200 p-12 text-center">
+                    <Package className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                    <h3 style={headingFont} className="text-xl text-stone-700 mb-2">
+                      No Products in {activeCategory}
+                    </h3>
+                    <p className="text-xs text-stone-500 mb-6">
+                      Get started by adding products to this category.
+                    </p>
+                    <button
+                      onClick={() => handleOpenAddModal(activeCategory)}
+                      className="bg-[#2C2C2C] text-white px-6 py-2.5 text-[10px] uppercase tracking-[0.18em] font-semibold hover:bg-stone-900 transition-colors inline-flex items-center gap-2"
+                    >
+                      <Plus size={14} /> Add Product
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-white border border-stone-200 flex flex-col group hover:shadow-md transition-shadow"
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative aspect-square w-full bg-stone-100 overflow-hidden">
+                          <img
+                            src={product.image_url || ''}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 text-[9px] uppercase tracking-wider font-semibold text-stone-800">
+                            {product.category}
+                          </span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5 flex flex-col flex-grow">
+                          <h3 style={headingFont} className="text-lg text-stone-900 font-normal mb-1">
+                            {product.name}
+                          </h3>
+                          <p className="text-sm font-semibold text-stone-800 mb-2">
+                            {formatNaira(product.price)}
+                          </p>
+                          {product.description && (
+                            <p className="text-xs text-stone-500 font-light line-clamp-2 leading-relaxed mb-4">
+                              {product.description}
+                            </p>
+                          )}
+
+                          {/* Action buttons */}
+                          <div className="mt-auto pt-4 border-t border-stone-100 flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => handleOpenEdit(product)}
+                              className="flex-1 border border-stone-200 text-stone-700 hover:bg-stone-900 hover:text-white py-2 text-[10px] uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              <Edit2 size={12} /> Edit
+                            </button>
+                            <button
+                              onClick={() => setDeletingProduct(product)}
+                              className="border border-rose-200 text-rose-700 hover:bg-rose-600 hover:text-white px-3 py-2 text-[10px] uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5"
+                              title="Delete Product"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

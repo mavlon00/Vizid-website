@@ -1115,7 +1115,7 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
           { id: 3, title: 'The Art of Layering Interiors', subtitle: 'HOW-TO · JULY 2, 2026', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200' },
           { id: 4, title: 'Mixing Wood Tones & Textures', subtitle: 'DESIGN TIPS · JUNE 25, 2026', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=1200' },
           { id: 5, title: 'Serene Morning Sanctuary', subtitle: 'LIFESTYLE · JUNE 18, 2026', img: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=1200' },
-          { id: 6, title: 'Open Shelving & Kitchen Styling', subtitle: 'HOW-TO · JUNE 10, 2026', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200' }
+          { id: 6, title: 'Open Shelving & Kitchen Styling', subtitle: 'HOW-TO · JUNE 10, 2026', img: '/kitchen_open_shelving.png' }
         ]}
       />
 
@@ -1273,6 +1273,7 @@ const CartDrawer = ({
   items,
   onRemove,
   onChangeQty,
+  onCheckout,
   headingFont,
 }: {
   open: boolean;
@@ -1280,6 +1281,7 @@ const CartDrawer = ({
   items: CartItem[];
   onRemove: (id: string | number) => void;
   onChangeQty: (id: string | number, delta: number) => void;
+  onCheckout: () => void;
   headingFont: React.CSSProperties;
 }) => {
   const total = items.reduce((sum, i) => sum + i.priceNaira * i.qty, 0);
@@ -1414,7 +1416,10 @@ const CartDrawer = ({
             </div>
 
             {/* CTA */}
-            <button className="w-full bg-[#f68b1e] hover:bg-orange-500 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide uppercase transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
+            <button
+              onClick={() => { onClose(); onCheckout(); }}
+              className="w-full bg-[#f68b1e] hover:bg-orange-500 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide uppercase transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
+            >
               <CheckCircle size={16} />
               Proceed to Checkout
             </button>
@@ -1672,6 +1677,7 @@ const ShopPage = ({
   const [activeCategory, setActiveCategory] = useState<string>('New');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Set<string | number>>(new Set());
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
@@ -1846,15 +1852,6 @@ const ShopPage = ({
             {/* RIGHT — Icons */}
             <div className="flex items-center justify-end gap-5 w-1/3">
               <button
-                onClick={() => setCurrentPage?.('auth')}
-                title="Account"
-                aria-label="Account"
-                className="text-white hover:text-white/80 transition-colors"
-              >
-                <User size={17} strokeWidth={1.5} />
-              </button>
-
-              <button
                 title="Saved Items"
                 aria-label="Saved Items"
                 className="relative text-white hover:text-white/80 transition-colors"
@@ -1984,8 +1981,23 @@ const ShopPage = ({
         items={cartItems}
         onRemove={handleRemoveFromCart}
         onChangeQty={handleChangeQty}
+        onCheckout={() => setIsCheckoutOpen(true)}
         headingFont={headingFont}
       />
+
+      {/* ── Checkout Modal ── */}
+      {isCheckoutOpen && (
+        <CheckoutModal
+          items={cartItems}
+          total={cartItems.reduce((s, i) => s + i.priceNaira * i.qty, 0)}
+          onClose={() => setIsCheckoutOpen(false)}
+          onSuccess={() => {
+            setCartItems([]);
+            setIsCheckoutOpen(false);
+          }}
+          headingFont={headingFont}
+        />
+      )}
 
       {/* ── Product Detail Modal ── */}
       {selectedProduct && (
@@ -2018,7 +2030,356 @@ const ShopPage = ({
 
 
 
-/* ─── AuthPage (Sign Up / Login with Email Code Verification) ─── */
+/* ─── CheckoutModal ─────────────────────────────────────────────────────── */
+// Declare the global PaystackPop object injected by js.paystack.co/v1/inline.js
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup: (opts: {
+        key: string;
+        email: string;
+        amount: number; // in kobo
+        currency: string;
+        ref: string;
+        metadata?: Record<string, unknown>;
+        onClose: () => void;
+        callback: (response: { reference: string }) => void;
+      }) => { openIframe: () => void };
+    };
+  }
+}
+
+const CheckoutModal = ({
+  items,
+  total,
+  onClose,
+  onSuccess,
+  headingFont,
+}: {
+  items: CartItem[];
+  total: number;
+  onClose: () => void;
+  onSuccess: () => void;
+  headingFont: React.CSSProperties;
+}) => {
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'form' | 'processing' | 'success' | 'error'>('form');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [cancelMessage, setCancelMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage('');
+    setCancelMessage('');
+
+    try {
+      // ── 1. Get current session ────────────────────────────────────
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setErrorMessage('You must be logged in to checkout. Please refresh and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ── 2. Generate reference ─────────────────────────────────────
+      const randomHex = Math.random().toString(16).slice(2, 10).toUpperCase();
+      const reference = `VIZID-${Date.now()}-${randomHex}`;
+
+      // ── 3. Create pending order row ───────────────────────────────
+      const orderItems = items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        category: i.category,
+        price: i.priceNaira,
+        qty: i.qty,
+        img: i.img,
+      }));
+
+      const { error: insertError } = await supabase.from('orders').insert({
+        user_id: session.user.id,
+        items: orderItems,
+        total_amount: total,
+        delivery_address: deliveryAddress.trim(),
+        phone_number: phoneNumber.trim(),
+        status: 'pending',
+        paystack_reference: reference,
+      });
+
+      if (insertError) {
+        console.error('Order insert failed:', insertError);
+        setErrorMessage(`Failed to create order: ${insertError.message}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ── 4. Open Paystack inline popup ─────────────────────────────
+      const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+
+      if (!paystackPublicKey || paystackPublicKey === 'pk_test_PLACEHOLDER') {
+        setErrorMessage(
+          'Paystack public key not configured. Add VITE_PAYSTACK_PUBLIC_KEY to your environment and rebuild.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!window.PaystackPop) {
+        setErrorMessage('Paystack could not be loaded. Check your internet connection and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setCheckoutStep('processing');
+
+      const handler = window.PaystackPop.setup({
+        key: paystackPublicKey,
+        email: session.user.email!,
+        // Paystack expects amount in kobo (Naira × 100)
+        amount: Math.round(total * 100),
+        currency: 'NGN',
+        ref: reference,
+        metadata: { order_reference: reference },
+
+        onClose: () => {
+          // User closed popup without paying
+          setCheckoutStep('form');
+          setCancelMessage('Payment cancelled — your cart is still saved.');
+          setIsSubmitting(false);
+        },
+
+        callback: async (response) => {
+          // Paystack popup closed after apparent payment — now verify server-side
+          try {
+            const { data: { session: verifySession } } = await supabase.auth.getSession();
+            const verifyRes = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${verifySession?.access_token}`,
+                  apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify({ reference: response.reference }),
+              }
+            );
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok || !verifyData.success) {
+              setCheckoutStep('error');
+              setErrorMessage(
+                verifyData.error ||
+                'Payment could not be verified. Contact support with ref: ' + response.reference
+              );
+              return;
+            }
+
+            // Payment confirmed server-side
+            setCheckoutStep('success');
+            setTimeout(() => {
+              onSuccess();
+            }, 2500);
+          } catch (verifyErr: any) {
+            setCheckoutStep('error');
+            setErrorMessage('Verification request failed: ' + (verifyErr?.message || 'Unknown error'));
+          }
+        },
+      });
+
+      handler.openIframe();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'An unexpected error occurred.');
+      setIsSubmitting(false);
+      setCheckoutStep('form');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white w-full max-w-lg shadow-2xl relative animate-fadeIn my-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-stone-200">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-stone-400 mb-0.5">Secure Checkout</p>
+            <h2 style={headingFont} className="text-2xl text-[#2C2C2C]">Complete Your Order</h2>
+          </div>
+          {checkoutStep === 'form' && (
+            <button onClick={onClose} className="text-stone-400 hover:text-stone-800 transition-colors">
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        {/* ── SUCCESS STATE ── */}
+        {checkoutStep === 'success' && (
+          <div className="px-6 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mb-2">
+              <CheckCircle size={32} className="text-emerald-600" />
+            </div>
+            <h3 style={headingFont} className="text-2xl text-[#2C2C2C]">Payment Confirmed</h3>
+            <p className="text-stone-500 text-sm leading-relaxed max-w-sm">
+              Thank you for your order. We'll be in touch shortly to arrange delivery.
+            </p>
+            <div className="w-8 h-px bg-stone-200 mt-2" />
+          </div>
+        )}
+
+        {/* ── ERROR STATE ── */}
+        {checkoutStep === 'error' && (
+          <div className="px-6 py-12 flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center mb-2">
+              <X size={28} className="text-rose-600" />
+            </div>
+            <h3 style={headingFont} className="text-xl text-[#2C2C2C]">Payment Issue</h3>
+            <p className="text-rose-700 text-sm leading-relaxed max-w-sm bg-rose-50 border border-rose-200 px-4 py-3">
+              {errorMessage}
+            </p>
+            <button
+              onClick={onClose}
+              className="mt-2 px-8 py-3 border border-stone-300 text-stone-700 text-[11px] uppercase tracking-wider font-semibold hover:bg-stone-100 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
+
+        {/* ── PROCESSING STATE ── */}
+        {checkoutStep === 'processing' && (
+          <div className="px-6 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-10 h-10 border-2 border-stone-200 border-t-[#f68b1e] rounded-full animate-spin mb-2" />
+            <p className="text-stone-600 text-sm">Processing payment securely…</p>
+            <p className="text-stone-400 text-xs">Complete the payment in the Paystack window.</p>
+          </div>
+        )}
+
+        {/* ── FORM STATE ── */}
+        {checkoutStep === 'form' && (
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+
+            {/* Cancel message */}
+            {cancelMessage && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-4 py-3 flex items-start gap-2">
+                <span className="text-amber-500 mt-0.5">⚠</span>
+                {cancelMessage}
+              </div>
+            )}
+
+            {/* Error message */}
+            {errorMessage && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs px-4 py-3">
+                {errorMessage}
+              </div>
+            )}
+
+            {/* Order Summary */}
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-stone-500 mb-3">Order Summary</p>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 bg-stone-100 overflow-hidden shrink-0">
+                        <AppImage src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-stone-800 leading-tight truncate">{item.name}</p>
+                        <p className="text-[11px] text-stone-400">Qty: {item.qty}</p>
+                      </div>
+                    </div>
+                    <p className="text-[12px] font-semibold text-stone-800 shrink-0">
+                      {formatNaira(item.priceNaira * item.qty)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center pt-3 mt-3 border-t border-stone-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-600">Total</span>
+                <span className="text-base font-bold text-[#f68b1e]">{formatNaira(total)}</span>
+              </div>
+            </div>
+
+            {/* Delivery Details */}
+            <div className="space-y-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-stone-500">Delivery Details</p>
+
+              <div>
+                <label
+                  htmlFor="checkout-address"
+                  className="block text-[10px] uppercase tracking-wider font-semibold text-stone-600 mb-1.5"
+                >
+                  Delivery Address *
+                </label>
+                <textarea
+                  id="checkout-address"
+                  required
+                  rows={3}
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Street address, city, state"
+                  className="w-full p-3 border border-stone-300 text-sm text-stone-800 bg-[#FAFAFA] focus:outline-none focus:border-stone-900 resize-none"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="checkout-phone"
+                  className="block text-[10px] uppercase tracking-wider font-semibold text-stone-600 mb-1.5"
+                >
+                  Phone Number *
+                </label>
+                <input
+                  id="checkout-phone"
+                  type="tel"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+234 800 000 0000"
+                  className="w-full p-3 border border-stone-300 text-sm text-stone-800 bg-[#FAFAFA] focus:outline-none focus:border-stone-900"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 border border-stone-300 text-stone-700 py-3.5 text-[11px] uppercase tracking-wider font-semibold hover:bg-stone-100 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-[#f68b1e] hover:bg-orange-500 text-white py-3.5 text-[11px] uppercase tracking-wider font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-100"
+              >
+                {isSubmitting ? (
+                  <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>
+                ) : (
+                  <><ShoppingBag size={14} /> Pay {formatNaira(total)}</>
+                )}
+              </button>
+            </div>
+
+            <p className="text-center text-[10px] text-stone-400 tracking-wide">
+              Secured by Paystack · SSL encrypted
+            </p>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+
+/* ─── AuthPage (Sign Up / Login with Email Confirmation) ─── */
 const AuthPage = ({
   headingFont,
   setCurrentPage,
@@ -2029,11 +2390,9 @@ const AuthPage = ({
   targetPage?: string;
 }) => {
   const [mode, setMode] = useState<'signup' | 'signin'>('signin');
-  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -2082,64 +2441,13 @@ const AuthPage = ({
         if (data.session) {
           setCurrentPage(targetPage);
         } else {
-          setStep('otp');
-          setSuccessMsg('A 6-digit verification code has been sent to your email.');
+          setSuccessMsg('Check your email and click the confirmation link to activate your account.');
         }
       }
     } catch (err: any) {
       console.error('Auth error:', err);
       const message = err?.error_description || err?.message || (typeof err === 'string' ? err : 'Authentication error occurred.');
       setErrorMsg(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode.trim(),
-        type: 'signup',
-      });
-
-      if (error) throw error;
-
-      if (data.session) {
-        setSuccessMsg('Email verified successfully! Redirecting...');
-        setTimeout(() => setCurrentPage(targetPage), 800);
-      } else {
-        setSuccessMsg('Verification successful. Please log in with your credentials.');
-        setMode('signin');
-        setStep('credentials');
-      }
-    } catch (err: any) {
-      console.error('OTP Verification error:', err);
-      const message = err?.error_description || err?.message || 'Invalid or expired verification code. Please check and try again.';
-      setErrorMsg(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email.trim(),
-      });
-      if (error) throw error;
-      setSuccessMsg('A new 6-digit verification code has been sent to your email.');
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Failed to resend verification code.');
     } finally {
       setIsLoading(false);
     }
@@ -2153,38 +2461,34 @@ const AuthPage = ({
             Vizid Luxury Living
           </p>
           <h1 style={headingFont} className="text-3xl sm:text-4xl text-[#2C2C2C] font-light">
-            {step === 'otp' ? 'Verify Email' : (mode === 'signup' ? 'Create Account' : 'Welcome Back')}
+            {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
           </h1>
           <p className="text-xs text-stone-500 mt-2 leading-relaxed">
-            {step === 'otp'
-              ? `Enter the 6-digit verification code sent to ${email}`
-              : (mode === 'signup'
-                ? 'Sign up to access the Vizid Shop and custom collections.'
-                : 'Sign in to access your account and browse the Vizid Shop.')}
+            {mode === 'signup'
+              ? 'Sign up to access the Vizid Shop and custom collections.'
+              : 'Sign in to access your account and browse the Vizid Shop.'}
           </p>
         </div>
 
         {/* Tab switcher */}
-        {step === 'credentials' && (
-          <div className="flex border-b border-stone-200 mb-8">
-            <button
-              onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
-              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-                mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); }}
-              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-                mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-              }`}
-            >
-              Create Account
-            </button>
-          </div>
-        )}
+        <div className="flex border-b border-stone-200 mb-8">
+          <button
+            onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+              mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+              mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
 
         {errorMsg && (
           <div className="mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded text-center">
@@ -2192,55 +2496,17 @@ const AuthPage = ({
           </div>
         )}
 
-        {successMsg && (
-          <div className="mb-6 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded text-center font-medium">
-            {successMsg}
+        {mode === 'signup' && successMsg ? (
+          <div className="py-6 px-4 bg-emerald-50 border border-emerald-200 rounded-md text-center space-y-4">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-emerald-900 text-xs sm:text-sm font-medium leading-relaxed">
+              {successMsg}
+            </p>
           </div>
-        )}
-
-        {step === 'otp' ? (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div>
-              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
-                6-Digit Verification Code
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="123456"
-                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-center text-lg tracking-[0.3em] font-mono text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || otpCode.length !== 6}
-              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60"
-            >
-              {isLoading ? 'Verifying...' : 'Verify Code & Enter Shop'}
-            </button>
-
-            <div className="flex items-center justify-between text-xs pt-2">
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                disabled={isLoading}
-                className="text-[#8B6F47] hover:underline font-medium"
-              >
-                Resend Code
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStep('credentials'); setErrorMsg(null); setSuccessMsg(null); }}
-                className="text-stone-500 hover:text-stone-800"
-              >
-                Back to Sign Up
-              </button>
-            </div>
-          </form>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
@@ -2613,10 +2879,21 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session && (currentPage === 'auth' || currentPage === 'signup')) {
+        setCurrentPage('shop');
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+        setCurrentPage((prevPage) => {
+          if (prevPage === 'auth' || prevPage === 'signup' || prevPage === 'home') {
+            return 'shop';
+          }
+          return prevPage;
+        });
+      }
     });
 
     return () => {
