@@ -14,7 +14,6 @@ import pexelsKitchen from '../pexels-perqued-9757618.jpg';
 import { WorkWithUsPage } from './WorkWithUsPage';
 import { ReadPage } from './ReadPage';
 import { VizidDecorAcademyPage } from './VizidDecorAcademyPage';
-import { AdminPage } from './AdminPage';
 import { supabase } from './supabase';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -2413,17 +2412,7 @@ const AuthPage = ({
         if (error) throw error;
 
         if (data.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-          if (profile?.role === 'admin') {
-            setCurrentPage('admin');
-          } else {
-            setCurrentPage(targetPage);
-          }
+          setCurrentPage(targetPage);
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -2967,8 +2956,6 @@ export default function App() {
         );
       case 'academy':
         return <VizidDecorAcademyPage headingFont={headingFont} setCurrentPage={setCurrentPage} adminPhoneNumber="08121819461" />;
-      case 'admin':
-        return <AdminPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
       case 'profile':
       case 'auth':
       case 'signup':
