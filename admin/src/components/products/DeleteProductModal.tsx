@@ -24,7 +24,7 @@ export const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Delete Product" maxWidth="md">
       <div className="space-y-4">
-        <div className="flex items-start gap-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-200">
+        <div className="flex items-start gap-4 p-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200">
           <AlertTriangle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
           <div className="text-xs space-y-1">
             <h4 className="font-bold text-sm text-rose-300">Permanent Action</h4>
@@ -35,34 +35,34 @@ export const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
         </div>
 
         {/* Target Product Summary Card */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/80 border border-slate-700/80">
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
           {product.image_url ? (
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-16 h-16 rounded-lg object-cover shrink-0 bg-slate-900"
+              className="w-16 h-16 rounded-lg object-cover shrink-0 bg-stone-900 border border-white/10"
             />
           ) : (
-            <div className="w-16 h-16 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 shrink-0 text-xs">
+            <div className="w-16 h-16 rounded-lg bg-stone-900 border border-white/10 flex items-center justify-center text-stone-500 shrink-0 text-xs">
               No Image
             </div>
           )}
 
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-slate-100 text-sm truncate">{product.name}</h4>
-            <p className="text-xs text-slate-400 mt-0.5">{product.category}</p>
-            <p className="text-xs font-bold text-amber-400 mt-1">
+            <h4 className="font-semibold text-white text-sm truncate">{product.name}</h4>
+            <p className="text-xs text-stone-400 mt-0.5">{product.category}</p>
+            <p className="text-xs font-bold text-[#D4AF37] mt-1">
               {formatNaira(product.price)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium btn-glass disabled:opacity-50"
           >
             Cancel
           </button>
@@ -70,7 +70,7 @@ export const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-lg shadow-rose-950/40 flex items-center gap-2 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-lg shadow-rose-950/50 flex items-center gap-2 disabled:opacity-50"
           >
             {isDeleting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

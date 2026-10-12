@@ -42,39 +42,40 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Ambient Lighting & Glass Glow Accents */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-amber-500/20 via-amber-600/10 to-yellow-400/5 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-500/10 blur-[130px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
+      {/* Ambient Metallic Gold Accents */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[#D4AF37]/15 via-[#B8963E]/10 to-transparent blur-[160px] rounded-full pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#D4AF37]/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Glassmorphism Card */}
-      <div className="w-full max-w-md glass-modal rounded-3xl p-8 shadow-2xl relative z-10 my-8 backdrop-blur-2xl">
-        {/* Brand Header matching Main Site */}
+      {/* Brand Login Card */}
+      <div className="w-full max-w-md glass-modal rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/95 relative z-10 my-8">
+        {/* Brand Header */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="flex flex-col items-center justify-center mb-3">
-            <img
-              src="/vizid.png"
-              alt="Vizid - Live Luxury"
-              className="h-12 w-auto object-contain"
-            />
-            <span className="text-[9px] tracking-[0.25em] font-light text-stone-300 uppercase mt-0.5">
-              .....live luxury
+          <div className="flex flex-col items-center justify-center mb-2">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-widest text-white">
+              VIZID DECOR
+            </h1>
+            <span className="text-[10px] tracking-[0.3em] font-medium text-[#D4AF37] uppercase mt-1">
+              Luxury Living
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-bold uppercase tracking-widest text-amber-400">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Admin Portal</span>
+          <div className="flex items-center gap-1.5 mt-4 px-3.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Admin Control Panel</span>
           </div>
 
-          <p className="text-xs text-slate-400 mt-3">
-            Sign in with your authorized admin credentials to manage store inventory & customer orders.
+          <h2 className="font-serif text-2xl font-bold text-white mt-5">
+            Administrator Sign In
+          </h2>
+          <p className="text-xs text-stone-300 mt-1.5 leading-relaxed">
+            Enter your credentials to access store inventory & order management.
           </p>
         </div>
 
         {/* Error Alert Box */}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-3 animate-in fade-in backdrop-blur-md">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-3 animate-in fade-in">
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div className="leading-relaxed">{errorMessage}</div>
           </div>
@@ -84,11 +85,11 @@ export const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-stone-300 uppercase tracking-wider mb-2">
               Admin Email Address
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
@@ -102,11 +103,11 @@ export const LoginPage: React.FC = () => {
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-stone-300 uppercase tracking-wider mb-2">
               Password
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 required
@@ -122,11 +123,11 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-xl shadow-amber-950/60 flex items-center justify-center gap-2 transition-all active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl btn-gold text-black font-bold text-sm flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-black" />
                 <span>Authenticating Admin...</span>
               </>
             ) : (
@@ -135,13 +136,13 @@ export const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-[11px] text-slate-500">
+        <div className="mt-8 text-center text-xs text-stone-400">
           Public Storefront:{' '}
           <a
             href="https://viziddecors.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-400 hover:underline"
+            className="text-[#D4AF37] font-semibold hover:underline"
           >
             viziddecors.com
           </a>
