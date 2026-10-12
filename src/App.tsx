@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, ChevronRight, ChevronLeft, Filter, Heart, CheckCircle } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, ChevronRight, ChevronLeft, Filter, Heart, CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -15,6 +15,8 @@ import { WorkWithUsPage } from './WorkWithUsPage';
 import { ReadPage } from './ReadPage';
 import { VizidDecorAcademyPage } from './VizidDecorAcademyPage';
 import { supabase } from './supabase';
+import { PendingShoppingAction } from './auth/types';
+import { validateEmail, validatePassword, validateFullName, formatAuthErrorMessage } from './auth/validation';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -68,6 +70,8 @@ const Header = ({
   setIsMobileMenuOpen,
   setSelectedService,
   setSelectedReadCategory,
+  session,
+  onLogout,
 }: {
   currentPage: string;
   setCurrentPage: (page: string) => void;
@@ -76,6 +80,8 @@ const Header = ({
   setIsMobileMenuOpen: (open: boolean) => void;
   setSelectedService: (service: 'virtual' | 'full') => void;
   setSelectedReadCategory: (cat: string) => void;
+  session?: any;
+  onLogout?: () => void;
 }) => {
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
 
@@ -166,9 +172,41 @@ const Header = ({
             </div>
 
             <div className="flex items-center space-x-6 mr-8 border-l border-stone-500/50 pl-8 h-8">
-              <button onClick={() => handleNav('shop')} className="text-white hover:text-stone-300 transition-colors" aria-label="Shop">
-                <ShoppingBag size={18} />
-              </button>
+              {session ? (
+                <div className="relative group flex items-center">
+                  <button
+                    onClick={() => handleNav('profile')}
+                    className="flex items-center gap-1.5 text-white hover:text-stone-300 transition-colors"
+                    title={session.user.user_metadata?.full_name || session.user.email}
+                  >
+                    <User size={18} />
+                    <span className="text-[10px] tracking-[0.1em] uppercase font-medium max-w-[85px] truncate">
+                      {session.user.user_metadata?.full_name?.split(' ')[0] || 'Account'}
+                    </span>
+                  </button>
+                  <div className="absolute top-[35px] right-0 w-48 bg-[#4A4F4C] shadow-2xl py-3 border border-stone-600 hidden group-hover:block z-50">
+                    <div className="px-4 py-2 border-b border-stone-600/70 text-[10px] text-stone-300">
+                      <p className="font-semibold text-white truncate">{session.user.user_metadata?.full_name || 'Customer'}</p>
+                      <p className="text-stone-400 text-[9px] truncate">{session.user.email}</p>
+                    </div>
+                    <button
+                      onClick={onLogout}
+                      className="block w-full text-left px-4 py-2 text-[10px] tracking-[0.1em] text-rose-300 hover:text-white hover:bg-[#3D423F] transition-colors uppercase font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleNav('auth')}
+                  className="flex items-center gap-1.5 text-white hover:text-stone-300 transition-colors text-[10px] tracking-[0.15em] uppercase font-medium"
+                  aria-label="Sign In"
+                >
+                  <User size={16} />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
 
             <div className="border-l border-stone-500/50 pl-8 h-8 flex flex-col justify-center items-start">
@@ -182,8 +220,8 @@ const Header = ({
           </div>
 
           <div className="flex items-center space-x-4 lg:hidden">
-            <button onClick={() => handleNav('shop')} className="p-1 text-white" aria-label="Shop">
-              <ShoppingBag size={20} />
+            <button onClick={() => handleNav(session ? 'profile' : 'auth')} className="p-1 text-white" aria-label="Account">
+              <User size={20} />
             </button>
           </div>
         </div>
@@ -202,8 +240,19 @@ const Header = ({
             </div>
           ))}
           <div className="pt-6 border-t border-stone-600 flex justify-between items-center text-xs text-stone-300">
-            <button onClick={() => handleNav('work')} className="uppercase tracking-widest">Contact Us</button>
-            <button onClick={() => handleNav('academy')} className="uppercase tracking-widest">Vizid Decor Academy</button>
+            {session ? (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] text-stone-200">
+                  Signed in: <strong className="text-white">{session.user.user_metadata?.full_name?.split(' ')[0] || session.user.email?.split('@')[0]}</strong>
+                </span>
+                <button onClick={onLogout} className="uppercase tracking-widest text-rose-300 hover:text-white">Sign Out</button>
+              </div>
+            ) : (
+              <>
+                <button onClick={() => handleNav('auth')} className="uppercase tracking-widest text-white">Sign In / Register</button>
+                <button onClick={() => handleNav('work')} className="uppercase tracking-widest">Contact Us</button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1448,7 +1497,7 @@ const ProductDetailModal = ({
   onClose: () => void;
   onAddToCart: (p: ShopProduct) => void;
   isWishlisted: boolean;
-  onToggleWishlist: (id: number) => void;
+  onToggleWishlist: (id: string | number) => void;
   headingFont: React.CSSProperties;
 }) => {
   const [qty, setQty] = useState(1);
@@ -1669,9 +1718,13 @@ const ShopCard = ({
 const ShopPage = ({
   headingFont,
   setCurrentPage,
+  session,
+  onLogout,
 }: {
   headingFont: React.CSSProperties;
   setCurrentPage?: (page: string) => void;
+  session?: any;
+  onLogout?: () => void;
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('New');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -1682,6 +1735,48 @@ const ShopPage = ({
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Preserve and complete intended shopping action after returning from authentication
+  useEffect(() => {
+    if (session) {
+      try {
+        const stored = sessionStorage.getItem('vizid_pending_shop_action');
+        if (stored) {
+          const action: PendingShoppingAction = JSON.parse(stored);
+          if (action.type === 'wishlist') {
+            setWishlist((prev) => {
+              const next = new Set(prev);
+              next.add(action.productId);
+              return next;
+            });
+            setAddedToast('Saved to your favourites');
+            setTimeout(() => setAddedToast(null), 2500);
+          } else if (action.type === 'add_to_cart') {
+            const p = action.product;
+            setCartItems((prev) => {
+              const existing = prev.find((i) => i.id === p.id);
+              if (existing) return prev.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
+              return [...prev, { ...p, qty: 1 }];
+            });
+            setAddedToast(`${p.name} added to cart`);
+            setTimeout(() => setAddedToast(null), 2500);
+          } else if (action.type === 'checkout') {
+            setIsCheckoutOpen(true);
+          }
+          sessionStorage.removeItem('vizid_pending_shop_action');
+        }
+      } catch (err) {
+        console.error('Error recovering pending shopping action:', err);
+      }
+    }
+  }, [session]);
+
+  const requireAuth = (action: PendingShoppingAction) => {
+    try {
+      sessionStorage.setItem('vizid_pending_shop_action', JSON.stringify(action));
+    } catch {}
+    setCurrentPage?.('auth');
+  };
 
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
@@ -1742,6 +1837,10 @@ const ShopPage = ({
   const totalCartCount = cartItems.reduce((s, i) => s + i.qty, 0);
 
   const handleAddToCart = (p: ShopProduct) => {
+    if (!session) {
+      requireAuth({ type: 'add_to_cart', product: p });
+      return;
+    }
     setCartItems((prev) => {
       const existing = prev.find((i) => i.id === p.id);
       if (existing) return prev.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i);
@@ -1764,6 +1863,10 @@ const ShopPage = ({
   };
 
   const handleToggleWishlist = (id: string | number) => {
+    if (!session) {
+      requireAuth({ type: 'wishlist', productId: id });
+      return;
+    }
     setWishlist((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -1851,6 +1954,16 @@ const ShopPage = ({
             {/* RIGHT — Icons */}
             <div className="flex items-center justify-end gap-5 w-1/3">
               <button
+                onClick={() => {
+                  if (!session) {
+                    requireAuth({ type: 'view_wishlist' });
+                    return;
+                  }
+                  if (wishlist.size === 0) {
+                    setAddedToast('Your favourites list is currently empty');
+                    setTimeout(() => setAddedToast(null), 2500);
+                  }
+                }}
                 title="Saved Items"
                 aria-label="Saved Items"
                 className="relative text-white hover:text-white/80 transition-colors"
@@ -1980,7 +2093,14 @@ const ShopPage = ({
         items={cartItems}
         onRemove={handleRemoveFromCart}
         onChangeQty={handleChangeQty}
-        onCheckout={() => setIsCheckoutOpen(true)}
+        onCheckout={() => {
+          if (!session) {
+            setIsCartOpen(false);
+            requireAuth({ type: 'checkout' });
+            return;
+          }
+          setIsCheckoutOpen(true);
+        }}
         headingFont={headingFont}
       />
 
@@ -2009,6 +2129,7 @@ const ShopPage = ({
           headingFont={headingFont}
         />
       )}
+
 
       {/* ── Toast ── */}
       {addedToast && (
@@ -2378,67 +2499,206 @@ const CheckoutModal = ({
 
 
 
-/* ─── AuthPage (Sign Up / Login with Email Confirmation) ─── */
+/* ─── AuthPage (Sign Up / Login / Password Reset / Profile View) ─── */
 const AuthPage = ({
   headingFont,
   setCurrentPage,
   targetPage = 'shop',
+  session,
+  onLogout,
 }: {
   headingFont: React.CSSProperties;
   setCurrentPage: (page: string) => void;
   targetPage?: string;
+  session?: any;
+  onLogout?: () => void;
 }) => {
-  const [mode, setMode] = useState<'signup' | 'signin'>('signin');
+  const [mode, setMode] = useState<'signup' | 'signin' | 'forgot_password'>('signin');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isDuplicate, setIsDuplicate] = useState(false);
+  const [touched, setTouched] = useState({ fullName: false, email: false, password: false });
+
+  // If user is already authenticated, show their Account details
+  if (session) {
+    const user = session.user;
+    const name = user.user_metadata?.full_name || 'Valued Client';
+    const userEmail = user.email || '';
+    const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Recent';
+
+    return (
+      <div className="w-full bg-[#FAF9F7] min-h-[80vh] flex items-center justify-center py-16 px-4">
+        <div className="max-w-md w-full bg-white border border-stone-200 shadow-xl p-8 sm:p-10 text-center">
+          <div className="w-16 h-16 bg-[#FAF9F7] border border-[#8B6F47]/30 text-[#8B6F47] rounded-full flex items-center justify-center mx-auto mb-4">
+            <User size={28} />
+          </div>
+          <p className="text-[10px] tracking-[0.25em] uppercase font-bold text-[#8B6F47] mb-1">
+            Vizid Account
+          </p>
+          <h1 style={headingFont} className="text-3xl sm:text-4xl text-[#2C2C2C] font-light mb-2">
+            Welcome, {name.split(' ')[0]}
+          </h1>
+          <p className="text-xs text-stone-500 mb-6">
+            You are currently signed in to your personal Vizid account.
+          </p>
+
+          <div className="bg-[#FAF9F7] border border-stone-200 p-4 text-left space-y-2 mb-6 text-xs">
+            <div className="flex justify-between border-b border-stone-200 pb-2">
+              <span className="text-stone-500">Name</span>
+              <span className="font-semibold text-stone-800">{name}</span>
+            </div>
+            <div className="flex justify-between border-b border-stone-200 pb-2">
+              <span className="text-stone-500">Email</span>
+              <span className="font-semibold text-stone-800 truncate max-w-[200px]">{userEmail}</span>
+            </div>
+            <div className="flex justify-between pt-1">
+              <span className="text-stone-500">Member Since</span>
+              <span className="font-semibold text-stone-800">{createdDate}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setCurrentPage('shop')}
+              className="w-full bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md"
+            >
+              Continue to Shop
+            </button>
+            <button
+              onClick={onLogout}
+              className="w-full border border-stone-300 text-stone-700 text-[11px] uppercase tracking-[0.2em] py-3 font-semibold hover:bg-stone-50 hover:text-rose-600 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const emailValidation = validateEmail(email);
+  const passwordValidation = validatePassword(password);
+  const nameValidation = validateFullName(fullName);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
-    setIsLoading(true);
+    setIsDuplicate(false);
 
-    try {
-      if (mode === 'signin') {
+    if (mode === 'forgot_password') {
+      if (!emailValidation.valid) {
+        setErrorMsg(emailValidation.error || 'Please enter your email address.');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: window.location.origin,
+        });
+        if (error) {
+          const formatted = formatAuthErrorMessage(error);
+          setErrorMsg(formatted.message);
+        } else {
+          setSuccessMsg('Password reset instructions have been sent to your email address.');
+        }
+      } catch (err: any) {
+        const formatted = formatAuthErrorMessage(err);
+        setErrorMsg(formatted.message);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    if (mode === 'signin') {
+      if (!emailValidation.valid) {
+        setErrorMsg(emailValidation.error || 'Please enter a valid email address.');
+        return;
+      }
+      if (!password) {
+        setErrorMsg('Password is required.');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          const formatted = formatAuthErrorMessage(error);
+          setErrorMsg(formatted.message);
+          return;
+        }
 
         if (data.user) {
           setCurrentPage(targetPage);
         }
-      } else {
+      } catch (err: any) {
+        const formatted = formatAuthErrorMessage(err);
+        setErrorMsg(formatted.message);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Sign Up
+      if (!nameValidation.valid) {
+        setErrorMsg(nameValidation.error || 'Please enter your full name.');
+        return;
+      }
+      if (!emailValidation.valid) {
+        setErrorMsg(emailValidation.error || 'Please enter a valid email address.');
+        return;
+      }
+      if (!passwordValidation.valid) {
+        setErrorMsg(passwordValidation.error || 'Please enter a stronger password.');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             data: {
               full_name: fullName.trim(),
+              name: fullName.trim(),
             },
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          const formatted = formatAuthErrorMessage(error);
+          setErrorMsg(formatted.message);
+          if (formatted.isDuplicate) {
+            setIsDuplicate(true);
+          }
+          return;
+        }
 
         if (data.session) {
           setCurrentPage(targetPage);
         } else {
           setSuccessMsg('Check your email and click the confirmation link to activate your account.');
         }
+      } catch (err: any) {
+        const formatted = formatAuthErrorMessage(err);
+        setErrorMsg(formatted.message);
+        if (formatted.isDuplicate) {
+          setIsDuplicate(true);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      console.error('Auth error:', err);
-      const message = err?.error_description || err?.message || (typeof err === 'string' ? err : 'Authentication error occurred.');
-      setErrorMsg(message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -2450,51 +2710,74 @@ const AuthPage = ({
             Vizid Luxury Living
           </p>
           <h1 style={headingFont} className="text-3xl sm:text-4xl text-[#2C2C2C] font-light">
-            {mode === 'signup' ? 'Create Account' : 'Welcome Back'}
+            {mode === 'signup'
+              ? 'Create Account'
+              : mode === 'forgot_password'
+              ? 'Reset Password'
+              : 'Welcome Back'}
           </h1>
           <p className="text-xs text-stone-500 mt-2 leading-relaxed">
             {mode === 'signup'
-              ? 'Sign up to access the Vizid Shop and custom collections.'
-              : 'Sign in to access your account and browse the Vizid Shop.'}
+              ? 'Sign up to access the Vizid Shop, save favourites and purchase bespoke pieces.'
+              : mode === 'forgot_password'
+              ? 'Enter your email to receive password recovery instructions.'
+              : 'Sign in to access your saved items and shop.'}
           </p>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-stone-200 mb-8">
-          <button
-            onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-              mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
-              mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {errorMsg && (
-          <div className="mb-6 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded text-center">
-            {errorMsg}
+        {mode !== 'forgot_password' && (
+          <div className="flex border-b border-stone-200 mb-8">
+            <button
+              onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); setIsDuplicate(false); }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+                mode === 'signin' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setMode('signup'); setErrorMsg(null); setSuccessMsg(null); setIsDuplicate(false); }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-[0.15em] font-semibold border-b-2 transition-colors ${
+                mode === 'signup' ? 'border-[#2C2C2C] text-[#2C2C2C]' : 'border-transparent text-stone-400 hover:text-stone-700'
+              }`}
+            >
+              Create Account
+            </button>
           </div>
         )}
 
-        {mode === 'signup' && successMsg ? (
-          <div className="py-6 px-4 bg-emerald-50 border border-emerald-200 rounded-md text-center space-y-4">
+        {errorMsg && (
+          <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-sm">
+            <p>{errorMsg}</p>
+            {isDuplicate && (
+              <button
+                type="button"
+                onClick={() => { setMode('signin'); setErrorMsg(null); setIsDuplicate(false); }}
+                className="mt-1.5 text-[11px] font-semibold underline text-[#8B6F47] hover:text-[#2C2C2C] block"
+              >
+                Switch to Sign In →
+              </button>
+            )}
+          </div>
+        )}
+
+        {successMsg ? (
+          <div className="py-6 px-4 bg-emerald-50 border border-emerald-200 rounded-sm text-center space-y-4">
             <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+              <CheckCircle size={24} />
             </div>
             <p className="text-emerald-900 text-xs sm:text-sm font-medium leading-relaxed">
               {successMsg}
             </p>
+            {mode === 'forgot_password' && (
+              <button
+                onClick={() => { setMode('signin'); setSuccessMsg(null); }}
+                className="text-xs uppercase tracking-wider text-[#8B6F47] font-semibold underline hover:text-stone-800"
+              >
+                ← Back to Sign In
+              </button>
+            )}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -2508,9 +2791,13 @@ const AuthPage = ({
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
+                  onBlur={() => setTouched((p) => ({ ...p, fullName: true }))}
+                  placeholder="e.g. Victor Idika"
                   className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
                 />
+                {touched.fullName && !nameValidation.valid && (
+                  <p className="text-[10px] text-rose-600 mt-1">{nameValidation.error}</p>
+                )}
               </div>
             )}
 
@@ -2523,32 +2810,117 @@ const AuthPage = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched((p) => ({ ...p, email: true }))}
                 placeholder="you@example.com"
                 className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
               />
+              {touched.email && !emailValidation.valid && (
+                <p className="text-[10px] text-rose-600 mt-1">{emailValidation.error}</p>
+              )}
             </div>
 
-            <div>
-              <label className="block text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
-              />
-            </div>
+            {mode !== 'forgot_password' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] uppercase tracking-[0.15em] text-stone-600 font-semibold">
+                    Password
+                  </label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode('forgot_password'); setErrorMsg(null); }}
+                      className="text-[10px] text-stone-500 hover:text-[#8B6F47] transition-colors underline"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => setTouched((p) => ({ ...p, password: true }))}
+                    placeholder="••••••••"
+                    className="w-full bg-[#FAF9F7] border border-stone-300 px-4 py-3 pr-10 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#8B6F47] transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
+                {mode === 'signup' && password.length > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex items-center gap-1.5 h-1 w-full bg-stone-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          passwordValidation.score === 'weak'
+                            ? 'w-1/3 bg-rose-500'
+                            : passwordValidation.score === 'medium'
+                            ? 'w-2/3 bg-amber-500'
+                            : 'w-full bg-emerald-500'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-stone-500">
+                      <span>
+                        Strength:{' '}
+                        <strong
+                          className={
+                            passwordValidation.score === 'weak'
+                              ? 'text-rose-600'
+                              : passwordValidation.score === 'medium'
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
+                          }
+                        >
+                          {passwordValidation.score.toUpperCase()}
+                        </strong>
+                      </span>
+                      <span className="text-[9px] text-stone-400">
+                        8+ chars, letters & numbers
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {touched.password && mode === 'signup' && !passwordValidation.valid && (
+                  <p className="text-[10px] text-rose-600 mt-1">{passwordValidation.error}</p>
+                )}
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60"
+              className="w-full mt-2 bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors shadow-md disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {isLoading ? 'Processing...' : (mode === 'signup' ? 'Create Account' : 'Sign In')}
+              {isLoading ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                mode === 'signup' ? 'Create Account' : mode === 'forgot_password' ? 'Send Reset Link' : 'Sign In'
+              )}
             </button>
+
+            {mode === 'forgot_password' && (
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => { setMode('signin'); setErrorMsg(null); }}
+                  className="text-[11px] font-semibold text-[#8B6F47] hover:underline"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            )}
           </form>
         )}
       </div>
@@ -2875,9 +3247,9 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+      if (event === 'SIGNED_IN' && session) {
         setCurrentPage((prevPage) => {
-          if (prevPage === 'auth' || prevPage === 'signup' || prevPage === 'home') {
+          if (prevPage === 'auth' || prevPage === 'signup') {
             return 'shop';
           }
           return prevPage;
@@ -2889,6 +3261,15 @@ export default function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   useLayoutEffect(() => {
     const lenis = new Lenis({
@@ -2938,10 +3319,14 @@ export default function App() {
           />
         );
       case 'shop':
-        if (!session) {
-          return <AuthPage headingFont={headingFont} setCurrentPage={setCurrentPage} targetPage="shop" />;
-        }
-        return <ShopPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
+        return (
+          <ShopPage
+            headingFont={headingFont}
+            setCurrentPage={setCurrentPage}
+            session={session}
+            onLogout={handleLogout}
+          />
+        );
       case 'portfolio':
         return <PortfolioPage headingFont={headingFont} />;
       case 'about':
@@ -2959,7 +3344,14 @@ export default function App() {
       case 'profile':
       case 'auth':
       case 'signup':
-        return <AuthPage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
+        return (
+          <AuthPage
+            headingFont={headingFont}
+            setCurrentPage={setCurrentPage}
+            session={session}
+            onLogout={handleLogout}
+          />
+        );
       case 'home':
       default:
         return <HomePage headingFont={headingFont} setCurrentPage={setCurrentPage} />;
@@ -2976,6 +3368,8 @@ export default function App() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         setSelectedService={setSelectedService}
         setSelectedReadCategory={setSelectedReadCategory}
+        session={session}
+        onLogout={handleLogout}
       />
       <main className="flex-grow w-full">
         {renderPage()}
