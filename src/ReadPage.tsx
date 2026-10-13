@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Calendar, Bookmark, Share2, ArrowRight, Eye, Sparkles, Check } from 'lucide-react';
-import pexelsKitchen from '../pexels-perqued-9757618.jpg';
+import pexelsKitchen from './assets/images/hero/interior-kitchen.jpg';
 
 interface ReadArticle {
   id: number;

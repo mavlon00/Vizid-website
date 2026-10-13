@@ -1,0 +1,9 @@
+# https://viziddecors.com robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /auth
+Disallow: /profile
+
+Sitemap: https://viziddecors.com/sitemap.xml

@@ -3,13 +3,13 @@ import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, Chevron
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import videoA from '../16428566_1920_1080_30fps.mp4';
-import videoB from '../7578552-hd_1920_1080_30fps.mp4';
-import videoC from '../7614417-hd_1920_1080_30fps.mp4';
-import siteLogo from '../vizid.png';
-import pexelsBertel from '../pexels-bertellifotografia-16985106.jpg';
-import pexelsDrew from '../pexels-drewnii19-11334182.jpg';
-import pexelsKitchen from '../pexels-perqued-9757618.jpg';
+import videoA from './assets/videos/hero/hero-a.mp4';
+import videoB from './assets/videos/hero/hero-b.mp4';
+import videoC from './assets/videos/hero/hero-c.mp4';
+import siteLogo from './assets/images/branding/vizid-logo.png';
+import pexelsBertel from './assets/images/hero/interior-hero-a.jpg';
+import pexelsDrew from './assets/images/hero/interior-hero-b.jpg';
+import pexelsKitchen from './assets/images/hero/interior-kitchen.jpg';
 
 import { WorkWithUsPage } from './WorkWithUsPage';
 import { ReadPage } from './ReadPage';
@@ -88,6 +88,7 @@ const Header = ({
   const navItems = [
     { name: 'Read', id: 'read', dropdown: ['Design', 'How To', 'Around the Table', 'Lifestyle'] },
     { name: 'Portfolio', id: 'portfolio' },
+    { name: 'Shop', id: 'shop' },
     { name: 'About', id: 'about' },
     { name: 'Work With Us', id: 'work', dropdown: ['Virtual Design', 'Full Service'] }
   ];
@@ -171,43 +172,6 @@ const Header = ({
               ))}
             </div>
 
-            <div className="flex items-center space-x-6 mr-8 border-l border-stone-500/50 pl-8 h-8">
-              {session ? (
-                <div className="relative group flex items-center">
-                  <button
-                    onClick={() => handleNav('profile')}
-                    className="flex items-center gap-1.5 text-white hover:text-stone-300 transition-colors"
-                    title={session.user.user_metadata?.full_name || session.user.email}
-                  >
-                    <User size={18} />
-                    <span className="text-[10px] tracking-[0.1em] uppercase font-medium max-w-[85px] truncate">
-                      {session.user.user_metadata?.full_name?.split(' ')[0] || 'Account'}
-                    </span>
-                  </button>
-                  <div className="absolute top-[35px] right-0 w-48 bg-[#4A4F4C] shadow-2xl py-3 border border-stone-600 hidden group-hover:block z-50">
-                    <div className="px-4 py-2 border-b border-stone-600/70 text-[10px] text-stone-300">
-                      <p className="font-semibold text-white truncate">{session.user.user_metadata?.full_name || 'Customer'}</p>
-                      <p className="text-stone-400 text-[9px] truncate">{session.user.email}</p>
-                    </div>
-                    <button
-                      onClick={onLogout}
-                      className="block w-full text-left px-4 py-2 text-[10px] tracking-[0.1em] text-rose-300 hover:text-white hover:bg-[#3D423F] transition-colors uppercase font-medium"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleNav('auth')}
-                  className="flex items-center gap-1.5 text-white hover:text-stone-300 transition-colors text-[10px] tracking-[0.15em] uppercase font-medium"
-                  aria-label="Sign In"
-                >
-                  <User size={16} />
-                  <span>Sign In</span>
-                </button>
-              )}
-            </div>
 
             <div className="border-l border-stone-500/50 pl-8 h-8 flex flex-col justify-center items-start">
               <button onClick={() => handleNav('academy')} className="text-[11px] tracking-[0.15em] uppercase font-medium hover:text-stone-300 transition-colors">
@@ -219,11 +183,7 @@ const Header = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 lg:hidden">
-            <button onClick={() => handleNav(session ? 'profile' : 'auth')} className="p-1 text-white" aria-label="Account">
-              <User size={20} />
-            </button>
-          </div>
+          <div className="flex items-center space-x-4 lg:hidden"></div>
         </div>
       </div>
 
@@ -233,7 +193,7 @@ const Header = ({
             <div key={item.id} className="space-y-2">
               <button
                 onClick={() => handleNav(item.id)}
-                className="text-sm uppercase tracking-[0.2em] font-medium block text-white"
+                className={`text-sm uppercase tracking-[0.2em] font-medium block ${currentPage === item.id ? 'text-stone-300' : 'text-white'}`}
               >
                 {item.name}
               </button>
@@ -248,10 +208,10 @@ const Header = ({
                 <button onClick={onLogout} className="uppercase tracking-widest text-rose-300 hover:text-white">Sign Out</button>
               </div>
             ) : (
-              <>
+              <div className="flex items-center justify-between w-full">
                 <button onClick={() => handleNav('auth')} className="uppercase tracking-widest text-white">Sign In / Register</button>
                 <button onClick={() => handleNav('work')} className="uppercase tracking-widest">Contact Us</button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -3229,13 +3189,105 @@ He is the Convener of "Self Discovery with Idika Victor" and co-author of A Marr
   );
 };
 
+const VALID_PAGES = ['home', 'portfolio', 'shop', 'read', 'about', 'work', 'academy', 'auth', 'signup', 'profile'];
+
+const getInitialPage = (): string => {
+  if (typeof window === 'undefined') return 'home';
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (path && VALID_PAGES.includes(path)) {
+    return path === 'signup' ? 'auth' : path;
+  }
+  const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+  if (hash && VALID_PAGES.includes(hash)) {
+    return hash === 'signup' ? 'auth' : hash;
+  }
+  return 'home';
+};
+
+const PAGE_META: Record<string, { title: string; desc: string }> = {
+  home: {
+    title: 'Vizid - Live Luxury | Interior Architecture & Luxury Furnishings',
+    desc: 'Vizid brings an elevated luxury perspective to home furnishings, bespoke interior architecture, and décor.',
+  },
+  portfolio: {
+    title: 'Portfolio & Curated Spaces | Vizid Decor',
+    desc: 'Explore completed residential transformations, spatial remodeling, and bespoke interior styling by Vizid.',
+  },
+  shop: {
+    title: 'The Shop - Luxury Furniture & Décor | Vizid',
+    desc: 'Discover handcrafted luxury furnishings, ambient lighting, statement seating, and architectural accents from Vizid.',
+  },
+  read: {
+    title: 'The Journal & Architectural Insights | Vizid',
+    desc: 'Articles, design principles, material selection guides, and architectural styling commentary by the Vizid design studio.',
+  },
+  about: {
+    title: 'About Us - Our Story & Vision | Vizid',
+    desc: 'Learn about Vizid design philosophy, creative leadership under Victor Idika, and our commitment to architectural living.',
+  },
+  work: {
+    title: 'Work With Us - Bespoke Interior Design Services | Vizid',
+    desc: 'Commission Vizid for full-service luxury residential design, spatial remodeling, or virtual architectural design consultation.',
+  },
+  academy: {
+    title: 'Vizid Decor Academy - Master Interior Styling & Design',
+    desc: 'Professional interior design masterclasses, spatial theory, and hands-on styling education by Vizid Decor Academy.',
+  },
+  auth: {
+    title: 'Client Sign In & Registration | Vizid',
+    desc: 'Access your personal Vizid client account, saved luxury furnishings, and order history.',
+  },
+  profile: {
+    title: 'My Client Account | Vizid',
+    desc: 'Manage your client profile, saved favorites, and order status with Vizid.',
+  },
+};
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState<string>(getInitialPage);
   const [selectedService, setSelectedService] = useState<'virtual' | 'full'>('virtual');
   const [selectedReadCategory, setSelectedReadCategory] = useState<string>('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const lenisRef = useRef<Lenis | null>(null);
+
+  useEffect(() => {
+    // 1. Sync title & meta
+    const meta = PAGE_META[currentPage] || PAGE_META.home;
+    document.title = meta.title;
+
+    const descEl = document.querySelector('meta[name="description"]');
+    if (descEl) descEl.setAttribute('content', meta.desc);
+
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', meta.title);
+
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', meta.desc);
+
+    const targetUrl = currentPage === 'home' ? 'https://viziddecors.com/' : `https://viziddecors.com/${currentPage}`;
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', targetUrl);
+
+    const canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (canonicalEl) canonicalEl.setAttribute('href', targetUrl);
+
+    // 2. Sync browser URL path without page reload
+    const targetPath = currentPage === 'home' ? '/' : `/${currentPage}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ page: currentPage }, '', targetPath);
+    }
+  }, [currentPage]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const page = getInitialPage();
+      setCurrentPage(page);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
