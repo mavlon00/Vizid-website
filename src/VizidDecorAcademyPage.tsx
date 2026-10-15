@@ -112,7 +112,7 @@ const FAQS = [
 export const VizidDecorAcademyPage: React.FC<VizidDecorAcademyProps> = ({
   headingFont,
   setCurrentPage,
-  adminPhoneNumber = '08121819461'
+  adminPhoneNumber = '09033225454'
 }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeTab, setActiveTab] = useState<'history' | 'mission' | 'vision'>('history');

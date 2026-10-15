@@ -19,7 +19,7 @@ const formatWhatsAppNumber = (phone: string) => {
 
 export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
   headingFont,
-  adminPhoneNumber = '08121819461',
+  adminPhoneNumber = '09033225454',
 }) => {
   // Form State
   const [formData, setFormData] = useState({
@@ -50,18 +50,30 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormSubmitted(true);
 
     const formDataObj = new FormData(e.currentTarget);
+    const honeypot = String(formDataObj.get('company') ?? '').trim();
+    if (honeypot) {
+      return;
+    }
+
+    const now = Date.now();
+    const lastSubmit = Number(window.localStorage.getItem('vizid_work_with_us_rate_limit') || '0');
+    if (lastSubmit && now - lastSubmit < 30000) {
+      return;
+    }
+    window.localStorage.setItem('vizid_work_with_us_rate_limit', String(now));
+
+    setFormSubmitted(true);
+
     try {
       await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formDataObj as any).toString(),
       });
-    } catch (err) {
-      console.error("Form backup submission failed:", err);
-      // do not block the WhatsApp flow on this failing
+    } catch {
+      // Do not block the WhatsApp flow if the backup fetch fails.
     }
 
     const cleanPhone = formatWhatsAppNumber(adminPhoneNumber);
@@ -261,6 +273,7 @@ export const WorkWithUsPage: React.FC<WorkWithUsProps> = ({
             ) : (
               <form name="inquiry" data-netlify="true" onSubmit={handleFormSubmit} className="space-y-8">
                 <input type="hidden" name="form-name" value="inquiry" />
+                <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
                 {/* What type of design services */}
                 <div className="space-y-2">
                   <label className="block text-xs sm:text-sm font-medium text-stone-800">

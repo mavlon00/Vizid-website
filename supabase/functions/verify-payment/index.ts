@@ -88,7 +88,6 @@ serve(async (req) => {
     // ── 4. Verify with Paystack server-side ────────────────────────
     const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
     if (!paystackSecretKey) {
-      console.error('PAYSTACK_SECRET_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Payment verification service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -108,7 +107,6 @@ serve(async (req) => {
     const paystackData = await paystackRes.json();
 
     if (!paystackRes.ok || !paystackData.status) {
-      console.error('Paystack API error:', JSON.stringify(paystackData));
       return new Response(
         JSON.stringify({ error: 'Paystack verification failed', detail: paystackData.message }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -134,7 +132,6 @@ serve(async (req) => {
     const expectedNaira = Number(order.total_amount);
 
     if (Math.abs(paidNaira - expectedNaira) > 0.01) {
-      console.error(`Amount mismatch: expected ₦${expectedNaira}, got ₦${paidNaira} (ref: ${reference})`);
       await supabaseAdmin
         .from('orders')
         .update({ status: 'failed' })
@@ -153,7 +150,6 @@ serve(async (req) => {
       .eq('paystack_reference', reference);
 
     if (updateError) {
-      console.error('Failed to update order status:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to record payment. Contact support with ref: ' + reference }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -165,8 +161,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
 
-  } catch (err) {
-    console.error('Unhandled error in verify-payment:', err);
+  } catch {
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

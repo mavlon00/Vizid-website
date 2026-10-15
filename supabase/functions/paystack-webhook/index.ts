@@ -10,7 +10,6 @@ serve(async (req) => {
 
   const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
   if (!paystackSecretKey) {
-    console.error('PAYSTACK_SECRET_KEY not configured');
     return new Response(JSON.stringify({ error: 'Webhook not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -23,7 +22,6 @@ serve(async (req) => {
   // ── 2. Verify HMAC-SHA512 signature ───────────────────────────
   const paystackSig = req.headers.get('x-paystack-signature');
   if (!paystackSig) {
-    console.warn('Webhook missing x-paystack-signature header');
     return new Response(JSON.stringify({ error: 'Invalid webhook signature' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +33,6 @@ serve(async (req) => {
     .digest('hex');
 
   if (paystackSig !== expectedSig) {
-    console.warn(`Webhook signature mismatch. Got: ${paystackSig}, Expected: ${expectedSig}`);
     return new Response(JSON.stringify({ error: 'Invalid webhook signature' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -78,7 +75,6 @@ serve(async (req) => {
 
   if (orderError || !order) {
     // Don't leak info; Paystack must receive 200 or it will retry
-    console.error(`Webhook: order not found for reference ${reference}`);
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -98,9 +94,6 @@ serve(async (req) => {
   const expectedNaira = Number(order.total_amount);
 
   if (Math.abs(paidNaira - expectedNaira) > 0.01) {
-    console.error(
-      `Webhook amount mismatch for ref ${reference}: expected ₦${expectedNaira}, got ₦${paidNaira}`,
-    );
     // Mark failed so we can investigate
     await supabaseAdmin
       .from('orders')
@@ -122,7 +115,6 @@ serve(async (req) => {
     .eq('status', 'pending'); // only update if still pending
 
   if (updateError) {
-    console.error(`Webhook: failed to update order ${order.id}:`, updateError);
     // Return 500 so Paystack retries
     return new Response(JSON.stringify({ error: 'DB update failed' }), {
       status: 500,
@@ -130,7 +122,6 @@ serve(async (req) => {
     });
   }
 
-  console.log(`Webhook: order ${order.id} marked paid via webhook (ref: ${reference})`);
   return new Response(JSON.stringify({ received: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },

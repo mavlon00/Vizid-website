@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Search, User, ShoppingBag, Menu, X, MessageCircle, Globe, Play, ChevronRight, ChevronLeft, Filter, Heart, CheckCircle, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 import videoA from './assets/videos/hero/hero-a.mp4';
 import videoB from './assets/videos/hero/hero-b.mp4';
 import videoC from './assets/videos/hero/hero-c.mp4';
@@ -16,11 +13,20 @@ import { ReadPage } from './ReadPage';
 import { VizidDecorAcademyPage } from './VizidDecorAcademyPage';
 import { supabase } from './supabase';
 import { PendingShoppingAction } from './auth/types';
+import { getCheckoutAuthDecision } from './auth/shopAuth';
 import { validateEmail, validatePassword, validateFullName, formatAuthErrorMessage } from './auth/validation';
 
-gsap.registerPlugin(ScrollTrigger);
-
 export const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+const loadAnimationDependencies = async () => {
+  const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+    import('gsap'),
+    import('gsap/ScrollTrigger'),
+  ]);
+
+  gsap.registerPlugin(ScrollTrigger);
+  return { gsap, ScrollTrigger };
+};
 
 const fallbackImageSrc = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='900'%3E%3Crect width='1200' height='900' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='32' fill='%23626a75'%3EImage not available%3C/text%3E%3C/svg%3E";
 
@@ -44,7 +50,7 @@ const TikTokIcon = ({ size = 18 }: { size?: number }) => (
   </svg>
 );
 
-const AppImage = ({ src, alt, className, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+const AppImage = ({ src, alt, className, loading, decoding, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
   const [imgSrc, setImgSrc] = useState(src || fallbackImageSrc);
 
   useEffect(() => {
@@ -56,6 +62,8 @@ const AppImage = ({ src, alt, className, ...props }: React.ImgHTMLAttributes<HTM
       src={imgSrc}
       alt={alt || ''}
       className={className}
+      loading={loading ?? 'lazy'}
+      decoding={decoding ?? 'async'}
       onError={() => setImgSrc(fallbackImageSrc)}
       {...props}
     />
@@ -237,11 +245,29 @@ const Footer = ({
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const formElement = e.currentTarget as HTMLFormElement;
+    const honeypot = (formElement.elements.namedItem('company') as HTMLInputElement | null)?.value?.trim();
+    if (honeypot) {
+      setEmailError('Submission blocked.');
+      return;
+    }
+
     const trimmed = emailInput.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setEmailError('Please enter a valid email address.');
       return;
     }
+
+    const rateKey = 'vizid_newsletter_rate_limit';
+    const now = Date.now();
+    const lastAttempt = Number(window.localStorage.getItem(rateKey) || '0');
+    if (lastAttempt && now - lastAttempt < 30000) {
+      setEmailError('Please wait a moment before submitting again.');
+      return;
+    }
+    window.localStorage.setItem(rateKey, String(now));
+
     setEmailError('');
     setIsSubmitting(true);
 
@@ -260,7 +286,6 @@ const Footer = ({
 
       setNewsletterSubscribed(true);
     } catch (err: any) {
-      console.error('Newsletter signup error:', err);
       setEmailError(err?.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -287,7 +312,7 @@ const Footer = ({
                 <span>You're subscribed! Welcome to the Vizid circle.</span>
               </div>
               <a
-                href={`https://wa.me/2348121819461?text=${encodeURIComponent(`✨ *NEW VIZID NEWSLETTER SUBSCRIBER*\n\n📧 *Email:* ${emailInput.trim()}`)}`}
+                href={`https://wa.me/2349033225454?text=${encodeURIComponent(`✨ *NEW VIZID NEWSLETTER SUBSCRIBER*\n\n📧 *Email:* ${emailInput.trim()}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center text-[10px] tracking-[0.15em] uppercase font-medium text-stone-400 hover:text-white transition-colors"
@@ -297,6 +322,14 @@ const Footer = ({
             </div>
           ) : (
             <form onSubmit={handleNewsletterSubmit} className="max-w-md space-y-1.5" noValidate>
+              <input
+                type="text"
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
               <div className="flex">
                 <input
                   type="email"
@@ -403,7 +436,7 @@ const Footer = ({
                   <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">3. Data Security & Storage</h4>
                   <p>We implement technical and organizational security measures to protect your information against unauthorized access, alteration, or disclosure.</p>
                   <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">4. Contact Us</h4>
-                  <p>If you have questions regarding this Privacy Policy, please contact privacy@vizid.studio or WhatsApp us at +234 812 181 9461.</p>
+                  <p>If you have questions regarding this Privacy Policy, please contact privacy@vizid.studio or WhatsApp us at +234 903 322 5454.</p>
                 </div>
               </div>
             )}
@@ -443,7 +476,7 @@ const Footer = ({
                   <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">2. Ongoing Improvements</h4>
                   <p>We continually monitor and update our interfaces to ensure seamless usability for users leveraging screen readers, keyboard-only navigation, or custom display settings.</p>
                   <h4 className="font-semibold text-stone-900 uppercase tracking-wider text-xs">3. Feedback & Assistance</h4>
-                  <p>If you experience any accessibility barriers while navigating our site, please reach out to us at accessibility@vizid.studio or WhatsApp +234 812 181 9461 for direct assistance.</p>
+                  <p>If you experience any accessibility barriers while navigating our site, please reach out to us at accessibility@vizid.studio or WhatsApp +234 903 322 5454 for direct assistance.</p>
                 </div>
               </div>
             )}
@@ -1040,28 +1073,50 @@ const HomePage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSPrope
   ];
 
   useIsomorphicLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const elements = document.querySelectorAll('.reveal-up');
-      elements.forEach((el) => {
-        gsap.fromTo(
-          el,
-          { y: 40, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.9,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 88%',
-              toggleActions: 'play none none reverse'
-            }
-          }
-        );
-      });
-    });
+    let cancelled = false;
+    let ctx: { revert: () => void } | undefined;
 
-    return () => ctx.revert();
+    const initializeAnimations = async () => {
+      try {
+        const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+          import('gsap'),
+          import('gsap/ScrollTrigger'),
+        ]);
+
+        if (cancelled) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        ctx = gsap.context(() => {
+          const elements = document.querySelectorAll('.reveal-up');
+          elements.forEach((el) => {
+            gsap.fromTo(
+              el,
+              { y: 40, opacity: 0 },
+              {
+                y: 0,
+                opacity: 1,
+                duration: 0.9,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: el,
+                  start: 'top 88%',
+                  toggleActions: 'play none none reverse'
+                }
+              }
+            );
+          });
+        });
+      } catch {
+        // Animation can be deferred without blocking the initial render.
+      }
+    };
+
+    void initializeAnimations();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   useEffect(() => {
@@ -1725,8 +1780,8 @@ const ShopPage = ({
           }
           sessionStorage.removeItem('vizid_pending_shop_action');
         }
-      } catch (err) {
-        console.error('Error recovering pending shopping action:', err);
+      } catch {
+        // Pending shop actions are optional and safely ignored if content is malformed.
       }
     }
   }, [session]);
@@ -1761,8 +1816,8 @@ const ShopPage = ({
           }));
           setProducts(mapped);
         }
-      } catch (err) {
-        console.error('Error fetching products:', err);
+      } catch {
+        // Product catalog failures are handled by the empty state.
       } finally {
         setIsLoadingProducts(false);
       }
@@ -2075,6 +2130,11 @@ const ShopPage = ({
             setIsCheckoutOpen(false);
           }}
           headingFont={headingFont}
+          session={session}
+          onOpenAuth={() => {
+            setIsCheckoutOpen(false);
+            setCurrentPage?.('auth');
+          }}
         />
       )}
 
@@ -2135,12 +2195,16 @@ const CheckoutModal = ({
   onClose,
   onSuccess,
   headingFont,
+  session,
+  onOpenAuth,
 }: {
   items: CartItem[];
   total: number;
   onClose: () => void;
   onSuccess: () => void;
   headingFont: React.CSSProperties;
+  session?: any;
+  onOpenAuth?: () => void;
 }) => {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -2148,6 +2212,11 @@ const CheckoutModal = ({
   const [checkoutStep, setCheckoutStep] = useState<'form' | 'processing' | 'success' | 'error'>('form');
   const [errorMessage, setErrorMessage] = useState('');
   const [cancelMessage, setCancelMessage] = useState('');
+
+  const authDecision = getCheckoutAuthDecision({
+    hasSession: Boolean(session),
+    guestCheckoutAllowed: true,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2189,7 +2258,6 @@ const CheckoutModal = ({
       });
 
       if (insertError) {
-        console.error('Order insert failed:', insertError);
         setErrorMessage(`Failed to create order: ${insertError.message}`);
         setIsSubmitting(false);
         return;
@@ -2277,6 +2345,34 @@ const CheckoutModal = ({
       setCheckoutStep('form');
     }
   };
+
+  if (!session && authDecision.requiresAuth) {
+    return (
+      <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white w-full max-w-lg shadow-2xl relative animate-fadeIn my-8 p-8 text-center">
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#8B6F47] mb-3">Secure Checkout</p>
+          <h3 style={headingFont} className="text-3xl text-[#2C2C2C] font-light mb-4">Complete Your Order</h3>
+          <p className="text-sm text-stone-600 leading-relaxed mb-6">{authDecision.message}</p>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={onOpenAuth || onClose}
+              className="w-full bg-[#2C2C2C] text-white text-[11px] uppercase tracking-[0.2em] py-3.5 font-semibold hover:bg-[#8B6F47] transition-colors"
+            >
+              Sign In / Create Account
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full border border-stone-300 text-stone-700 text-[11px] uppercase tracking-[0.2em] py-3 font-semibold hover:bg-stone-50 transition-colors"
+            >
+              Return to Shop
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -2891,13 +2987,36 @@ const AuthPage = ({
 
 const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) => {
   useIsomorphicLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const elements = document.querySelectorAll('.reveal-up');
-      elements.forEach((el) => {
-        gsap.fromTo(el, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
-      });
-    });
-    return () => ctx.revert();
+    let cancelled = false;
+    let ctx: { revert: () => void } | undefined;
+
+    const initializeAnimations = async () => {
+      try {
+        const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+          import('gsap'),
+          import('gsap/ScrollTrigger'),
+        ]);
+
+        if (cancelled) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        ctx = gsap.context(() => {
+          const elements = document.querySelectorAll('.reveal-up');
+          elements.forEach((el) => {
+            gsap.fromTo(el, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
+          });
+        });
+      } catch {
+        // Portfolio reveal animation is optional and safely deferred.
+      }
+    };
+
+    void initializeAnimations();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   const projects = [
@@ -3006,14 +3125,39 @@ const PortfolioPage = ({ headingFont }: { headingFont: React.CSSProperties; }) =
 // ReadPage imported from ReadPage.tsx
 
 const AboutPage = ({ headingFont, setCurrentPage }: { headingFont: React.CSSProperties; setCurrentPage: (page: string) => void }) => {
+  const [expandedMember, setExpandedMember] = useState<number | null>(0);
+
   useIsomorphicLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const elements = document.querySelectorAll('.reveal-up');
-      elements.forEach((el) => {
-        gsap.fromTo(el, { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
-      });
-    });
-    return () => ctx.revert();
+    let cancelled = false;
+    let ctx: { revert: () => void } | undefined;
+
+    const initializeAnimations = async () => {
+      try {
+        const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+          import('gsap'),
+          import('gsap/ScrollTrigger'),
+        ]);
+
+        if (cancelled) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        ctx = gsap.context(() => {
+          const elements = document.querySelectorAll('.reveal-up');
+          elements.forEach((el) => {
+            gsap.fromTo(el, { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
+          });
+        });
+      } catch {
+        // About reveal animation is optional and safely deferred.
+      }
+    };
+
+    void initializeAnimations();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   const team = [
@@ -3145,28 +3289,49 @@ He is the Convener of "Self Discovery with Idika Victor" and co-author of A Marr
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
-            {team.map((member, i) => (
-              <div key={i} className="bg-white border border-stone-200/80 overflow-hidden shadow-sm flex flex-col reveal-up">
-                <div className="w-full aspect-[3/4] overflow-hidden bg-stone-200 flex items-center justify-center relative">
-                  {member.img ? (
-                    <AppImage
-                      src={member.img}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-stone-200/70 flex flex-col items-center justify-center text-stone-400">
-                      <User size={48} strokeWidth={1} />
+            {team.map((member, i) => {
+              const isExpanded = expandedMember === i;
+              return (
+                <div key={i} className="bg-white border border-stone-200/80 overflow-hidden shadow-sm flex flex-col reveal-up">
+                  <div className="w-full aspect-[3/4] overflow-hidden bg-stone-200 flex items-center justify-center relative">
+                    {member.img ? (
+                      <AppImage
+                        src={member.img}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-stone-200/70 flex flex-col items-center justify-center text-stone-400">
+                        <User size={48} strokeWidth={1} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 sm:p-8 flex flex-col flex-grow">
+                    <p className="text-[9px] tracking-[0.25em] uppercase font-bold text-[#c9a96e] mb-2">{member.role}</p>
+                    <h3 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] font-normal mb-3">{member.name}</h3>
+
+                    <div className="transition-all duration-300 ease-in-out">
+                      <p
+                        className={`text-xs sm:text-sm text-stone-600 font-light leading-relaxed whitespace-pre-line transition-all duration-300 ${
+                          isExpanded ? '' : 'line-clamp-5'
+                        }`}
+                      >
+                        {member.bio}
+                      </p>
                     </div>
-                  )}
+
+                    <button
+                      type="button"
+                      onClick={() => setExpandedMember(isExpanded ? null : i)}
+                      className="mt-4 inline-flex items-center justify-between text-[10px] tracking-[0.2em] uppercase font-semibold text-[#2C2C2C] hover:text-[#8B6F47] transition-colors"
+                    >
+                      <span>{isExpanded ? 'Hide' : 'Read more'}</span>
+                      <span className="ml-2">{isExpanded ? '−' : '+'}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="p-6 sm:p-8 flex flex-col flex-grow">
-                  <p className="text-[9px] tracking-[0.25em] uppercase font-bold text-[#c9a96e] mb-2">{member.role}</p>
-                  <h3 style={headingFont} className="text-2xl sm:text-3xl text-[#2C2C2C] font-normal mb-3">{member.name}</h3>
-                  <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed whitespace-pre-line">{member.bio}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -3249,7 +3414,7 @@ export default function App() {
   const [selectedReadCategory, setSelectedReadCategory] = useState<string>('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
-  const lenisRef = useRef<Lenis | null>(null);
+  const lenisRef = useRef<any>(null);
 
   useEffect(() => {
     // 1. Sync title & meta
@@ -3318,32 +3483,58 @@ export default function App() {
     try {
       await supabase.auth.signOut();
       setSession(null);
-    } catch (err) {
-      console.error('Logout error:', err);
+    } catch {
+      // Logout failures are handled by the UI and session refresh flow.
     }
   };
 
   useLayoutEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    });
-
-    lenisRef.current = lenis;
-    lenis.on('scroll', ScrollTrigger.update);
-
-    let rafId: number;
-    function updateLenis(time: number) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(updateLenis);
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      return;
     }
-    rafId = requestAnimationFrame(updateLenis);
 
-    gsap.ticker.lagSmoothing(0);
+    let isCancelled = false;
+    let rafId: number | undefined;
+    let lenisInstance: any = null;
+
+    const initializeSmoothScroll = async () => {
+      try {
+        const { gsap, ScrollTrigger } = await loadAnimationDependencies();
+        if (isCancelled) {
+          return;
+        }
+
+        const { default: Lenis } = await import('lenis');
+        const lenis = new Lenis({
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+
+        lenisInstance = lenis;
+        lenisRef.current = lenis;
+        lenis.on('scroll', ScrollTrigger.update);
+
+        const updateLenis = (time: number) => {
+          lenis.raf(time);
+          rafId = requestAnimationFrame(updateLenis);
+        };
+        rafId = requestAnimationFrame(updateLenis);
+
+        gsap.ticker.lagSmoothing(0);
+      } catch {
+        // Non-critical motion setup is intentionally deferred.
+      }
+    };
+
+    void initializeSmoothScroll();
 
     return () => {
-      cancelAnimationFrame(rafId);
-      lenis.destroy();
+      isCancelled = true;
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      lenisInstance?.destroy();
       lenisRef.current = null;
     };
   }, []);
@@ -3354,7 +3545,10 @@ export default function App() {
     } else {
       window.scrollTo(0, 0);
     }
-    ScrollTrigger.refresh();
+
+    void import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+      ScrollTrigger.refresh();
+    });
   }, [currentPage]);
 
   const headingFont = { fontFamily: "'Cormorant Garamond', serif" };
@@ -3392,7 +3586,7 @@ export default function App() {
           />
         );
       case 'academy':
-        return <VizidDecorAcademyPage headingFont={headingFont} setCurrentPage={setCurrentPage} adminPhoneNumber="08121819461" />;
+        return <VizidDecorAcademyPage headingFont={headingFont} setCurrentPage={setCurrentPage} adminPhoneNumber="09033225454" />;
       case 'profile':
       case 'auth':
       case 'signup':

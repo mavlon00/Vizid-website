@@ -7,6 +7,7 @@ import {
   validatePassword,
   formatAuthErrorMessage,
 } from '../src/auth/validation.ts';
+import { getCheckoutAuthDecision } from '../src/auth/shopAuth.ts';
 
 test('Full Name validation', () => {
   assert.equal(validateFullName('').valid, false);
@@ -68,4 +69,14 @@ test('Format error messages for Supabase', () => {
 
   const rateLimit = formatAuthErrorMessage({ message: 'over_email_send_rate_limit' });
   assert.match(rateLimit.message, /too many requests/i);
+});
+
+test('Checkout auth decision is explicit and secure', () => {
+  const requiresAuth = getCheckoutAuthDecision({ hasSession: false, guestCheckoutAllowed: false });
+  assert.equal(requiresAuth.requiresAuth, true);
+  assert.match(requiresAuth.message, /sign in|create an account/i);
+
+  const canProceed = getCheckoutAuthDecision({ hasSession: true, guestCheckoutAllowed: false });
+  assert.equal(canProceed.requiresAuth, false);
+  assert.equal(canProceed.action, 'checkout');
 });
